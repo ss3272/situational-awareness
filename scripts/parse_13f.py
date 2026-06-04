@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Parses SEC 13F-HR XML information tables into structured dicts.
-Handles both modern and legacy XML namespace variants.
+Handles modern namespace, legacy no-namespace, and edge-case formats.
 """
 
 import xml.etree.ElementTree as ET
@@ -10,48 +10,74 @@ import xml.etree.ElementTree as ET
 def parse_info_table(xml_bytes: bytes) -> list[dict]:
     """
     Parse raw 13F XML bytes into a list of holding dicts.
+
+    Handles:
+      - Namespace: {http://www.sec.gov/edgar/document/thirteenf/informationtable}
+      - No namespace (older filings)
+      - Mixed namespace (root has ns, children don't)
     """
-    data = xml_bytes.lstrip(b"\xef\xbb\xbf")
+    # Strip UTF-8 BOM and leading whitespace
+    data = xml_bytes.lstrip(b"\xef\xbb\xbf").lstrip()
+
+    # Decode for debugging
+    try:
+        text_sample = data[:500].decode("utf-8", errors="replace")
+    except Exception:
+        text_sample = ""
+    print(f"  XML preview (first 500 chars): {text_sample!r}")
 
     try:
         root = ET.fromstring(data)
     except ET.ParseError as e:
         raise ValueError(f"XML parse error: {e}")
 
+    print(f"  Root tag: {root.tag}")
+
+    # Extract namespace URI from root tag (if present)
     ns_uri = ""
     if root.tag.startswith("{"):
         ns_uri = root.tag[1:root.tag.index("}")]
+    print(f"  Namespace URI: {ns_uri!r}")
 
-    entries_tag = f"{{{ns_uri}}}infoTable" if ns_uri else "infoTable"
-    rows = root.findall(f".//{entries_tag}")
+    def q(tag: str) -> str:
+        return f"{{{ns_uri}}}{tag}" if ns_uri else tag
 
+    # Find all <infoTable> elements anywhere in the tree
+    rows = root.findall(f".//{q('infoTable')}")
     if not rows:
         rows = root.findall(".//infoTable")
+    print(f"  Found {len(rows)} infoTable rows")
 
     holdings = []
     for row in rows:
-        def t(tag):
-            child = row.find(f"{{{ns_uri}}}{tag}") if ns_uri else None
-            if child is None:
+        def t(tag: str) -> str:
+            # Try namespaced first, then bare
+            child = row.find(q(tag))
+            if child is None and ns_uri:
                 child = row.find(tag)
-            return child.text.strip() if child is not None and child.text else ""
+            return (child.text or "").strip() if child is not None else ""
 
-        va_tag = f"{{{ns_uri}}}votingAuthority" if ns_uri else "votingAuthority"
-        va_el = row.find(va_tag) or row.find("votingAuthority")
+        # votingAuthority is a sub-element
+        va_el = row.find(q("votingAuthority"))
+        if va_el is None and ns_uri:
+            va_el = row.find("votingAuthority")
 
-        def va(tag):
+        def va(tag: str) -> str:
             if va_el is None:
                 return "0"
-            child = va_el.find(f"{{{ns_uri}}}{tag}") if ns_uri else None
-            if child is None:
+            child = va_el.find(q(tag))
+            if child is None and ns_uri:
                 child = va_el.find(tag)
-            return child.text.strip() if child is not None and child.text else "0"
+            return (child.text or "").strip() if child is not None else "0"
 
         try:
             value_thousands = int(t("value").replace(",", "") or "0")
-            shares = int(t("sshPrnamt").replace(",", "") or "0")
         except ValueError:
             value_thousands = 0
+
+        try:
+            shares = int(t("sshPrnamt").replace(",", "") or "0")
+        except ValueError:
             shares = 0
 
         holdings.append({

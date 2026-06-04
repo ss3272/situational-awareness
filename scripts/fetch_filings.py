@@ -67,8 +67,6 @@ def resolve_cik() -> str:
                 src = hit.get("_source", {})
                 entity = src.get("entity_name", "") or src.get("display_names", [""])[0]
                 if "situational awareness" in entity.lower():
-                    cik = src.get("file_num", "") or hit.get("_id", "")
-                    # Try extracting CIK from entity_id field
                     entity_id = src.get("entity_id", "")
                     if entity_id:
                         cik_padded = str(entity_id).zfill(10)
@@ -86,13 +84,11 @@ def resolve_cik() -> str:
     time.sleep(REQUEST_DELAY)
     try:
         data = fetch(url)
-        # Parse Atom XML
         root_el = ET.fromstring(data)
         ns = {"atom": "http://www.w3.org/2005/Atom"}
         for entry in root_el.findall("atom:entry", ns):
             title = entry.findtext("atom:title", "", ns)
             if "situational awareness" in title.lower():
-                # CIK is in the ID or content
                 content = entry.findtext("atom:content", "", ns)
                 cik_idx = content.find("CIK=")
                 if cik_idx >= 0:
@@ -124,10 +120,8 @@ def get_filing_xml_url(cik_padded: str, accession_raw: str) -> str | None:
         for doc in idx.get("documents", []):
             name = doc.get("name", "").lower()
             doc_type = doc.get("type", "").lower()
-            # The information table is in an XML file (not the primary submission document)
             if ("infotable" in name or name.endswith(".xml")) and "primary" not in doc_type:
                 return f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/{accession_dashed}/{doc['name']}"
-        # Fallback: look for any .xml file that isn't the cover page
         for doc in idx.get("documents", []):
             if doc.get("name", "").lower().endswith(".xml"):
                 return f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/{accession_dashed}/{doc['name']}"
@@ -140,12 +134,10 @@ def main():
     cik_padded = resolve_cik()
     cik_int = int(cik_padded)
 
-    # Load existing filings index
     filings_path = DATA_DIR / "filings.json"
     existing_filings: list = json.loads(filings_path.read_text())
     known_accessions = {f["accession_number"] for f in existing_filings}
 
-    # Fetch submission history from EDGAR
     print(f"\nFetching submission history for CIK {cik_padded}...")
     subs_url = f"https://data.sec.gov/submissions/CIK{cik_padded}.json"
     time.sleep(REQUEST_DELAY)
@@ -154,7 +146,6 @@ def main():
     entity_name = subs_data.get("name", "Situational Awareness LP")
     print(f"Entity: {entity_name}")
 
-    # Collect all 13F filings
     recent = subs_data.get("filings", {}).get("recent", {})
     forms = recent.get("form", [])
     accessions = recent.get("accessionNumber", [])
@@ -171,7 +162,6 @@ def main():
                 "period": periods[i],
             })
 
-    # Also check older filings if they exist
     older_files = subs_data.get("filings", {}).get("files", [])
     for older_ref in older_files:
         older_url = f"https://data.sec.gov/submissions/{older_ref['name']}"
@@ -202,7 +192,6 @@ def main():
         print("No new filings. Data is up to date.")
         return
 
-    # Import parse module
     sys.path.insert(0, str(Path(__file__).parent))
     from parse_13f import parse_info_table
 
@@ -211,7 +200,7 @@ def main():
 
     for filing in sorted(new_filings, key=lambda x: x["filed_date"]):
         acc = filing["accession_number"]
-        period = filing["period"]  # e.g. "2024-09-30"
+        period = filing["period"]
         quarter_key = period_to_quarter(period)
 
         print(f"\nFetching {filing['form']} for {quarter_key} (filed {filing['filed_date']}) ...")
@@ -236,10 +225,8 @@ def main():
         total_value = sum(h["value_thousands"] for h in holdings)
         print(f"  Parsed {len(holdings)} holdings, total value ${total_value:,}k")
 
-        # For amendments, replace existing quarter data
-        if filing["form"] == "13F-HR/A" or quarter_key in holdings_by_quarter:
-            if quarter_key in holdings_by_quarter and filing["form"] == "13F-HR/A":
-                print(f"  Replacing existing {quarter_key} data with amendment")
+        if filing["form"] == "13F-HR/A" and quarter_key in holdings_by_quarter:
+            print(f"  Replacing existing {quarter_key} data with amendment")
         holdings_by_quarter[quarter_key] = holdings
 
         filing_record = {
@@ -253,11 +240,9 @@ def main():
         existing_filings.append(filing_record)
         known_accessions.add(acc)
 
-    # Save updated data
     filings_path.write_text(json.dumps(existing_filings, indent=2))
     holdings_by_quarter_path.write_text(json.dumps(holdings_by_quarter, indent=2))
 
-    # Update meta
     meta_path = DATA_DIR / "meta.json"
     meta = json.loads(meta_path.read_text())
     import datetime
@@ -273,7 +258,6 @@ def main():
 
 
 def period_to_quarter(period_date: str) -> str:
-    """Convert '2024-09-30' to '2024-Q3'."""
     year, month, _ = period_date.split("-")
     quarter = (int(month) - 1) // 3 + 1
     return f"{year}-Q{quarter}"

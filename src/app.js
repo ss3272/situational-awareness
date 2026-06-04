@@ -1,6 +1,5 @@
 'use strict';
 
-// ── Data loading ────────────────────────────────────────────────
 const BASE = window.location.pathname.includes('/rbm-emulator')
   ? '/rbm-emulator'
   : '.';
@@ -11,13 +10,11 @@ async function loadJSON(path) {
   return resp.json();
 }
 
-// ── Palette ─────────────────────────────────────────────────────
 const PALETTE = [
   '#6e40c9', '#9f7aea', '#4299e1', '#48bb78', '#f4c542',
   '#ed8936', '#fc8181', '#76e4f7', '#b794f4', '#68d391',
 ];
 
-// ── Formatters ──────────────────────────────────────────────────
 const fmt = {
   usd(v) {
     if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
@@ -38,7 +35,6 @@ const fmt = {
   },
 };
 
-// ── State ────────────────────────────────────────────────────────
 let state = {
   meta: null,
   latestHoldings: null,
@@ -54,7 +50,6 @@ let state = {
   sparklineChart: null,
 };
 
-// ── Boot ─────────────────────────────────────────────────────────
 async function boot() {
   try {
     [state.meta, state.latestHoldings, state.holdingsByQuarter, state.filings] = await Promise.all([
@@ -87,7 +82,6 @@ function showEmptyState(msg) {
     </td></tr>`;
 }
 
-// ── Header ───────────────────────────────────────────────────────
 function renderHeader() {
   const { meta } = state;
   const updated = meta.last_updated
@@ -99,7 +93,6 @@ function renderHeader() {
     : '';
 }
 
-// ── Stats Row ────────────────────────────────────────────────────
 function renderStats() {
   const { latestHoldings, meta } = state;
   if (!latestHoldings || !latestHoldings.holdings) return;
@@ -120,7 +113,6 @@ function renderStats() {
   document.getElementById('stat-filings').textContent = meta.total_filing_count || 0;
 }
 
-// ── Quarter Select ───────────────────────────────────────────────
 function renderQuarterSelect() {
   const sel = document.getElementById('quarter-select');
   const quarters = Object.keys(state.holdingsByQuarter).sort().reverse();
@@ -133,7 +125,6 @@ function renderQuarterSelect() {
   });
 }
 
-// ── Holdings Table ───────────────────────────────────────────────
 function getDisplayHoldings() {
   const quarterData = state.holdingsByQuarter[state.activeQuarter] || [];
   let rows = quarterData.slice();
@@ -193,13 +184,11 @@ function renderHoldingsTable() {
     </tr>`;
   }).join('');
 
-  // Bind row clicks for drawer
   tbody.querySelectorAll('tr[data-cusip]').forEach(tr => {
     tr.addEventListener('click', () => openDrawer(tr.dataset.cusip));
   });
 }
 
-// ── History Chart ─────────────────────────────────────────────────
 function renderHistoryChart() {
   const { meta } = state;
   const series = meta.chart_series || {};
@@ -230,24 +219,16 @@ function renderHistoryChart() {
       maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#c9d1d9', font: { size: 12 } } },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(1)}M`,
-          },
-        },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(1)}M` } },
       },
       scales: {
         x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-        y: {
-          ticks: { color: '#8b949e', callback: v => `$${v}M` },
-          grid: { color: '#21262d' },
-        },
+        y: { ticks: { color: '#8b949e', callback: v => `$${v}M` }, grid: { color: '#21262d' } },
       },
     },
   });
 }
 
-// ── Donut Chart ──────────────────────────────────────────────────
 function renderDonutChart() {
   const holdings = (state.latestHoldings?.holdings || []).filter(h => h.qoq_status !== 'exited');
   if (!holdings.length) return;
@@ -259,11 +240,7 @@ function renderDonutChart() {
   const data = [...top10.map(h => h.value_thousands)];
   const colors = [...PALETTE.slice(0, top10.length)];
 
-  if (othersValue > 0) {
-    labels.push('Other');
-    data.push(othersValue);
-    colors.push('#30363d');
-  }
+  if (othersValue > 0) { labels.push('Other'); data.push(othersValue); colors.push('#30363d'); }
 
   const ctx = document.getElementById('donut-chart').getContext('2d');
   if (state.donutChart) state.donutChart.destroy();
@@ -288,7 +265,6 @@ function renderDonutChart() {
     },
   });
 
-  // Render legend
   const legend = document.getElementById('composition-legend');
   legend.innerHTML = top10.map((h, i) => `
     <div class="legend-item">
@@ -300,11 +276,8 @@ function renderDonutChart() {
   `).join('');
 }
 
-// ── Filings Table ────────────────────────────────────────────────
 function renderFilingsTable() {
-  const filings = [...(state.filings || [])].sort((a, b) =>
-    b.filed_date.localeCompare(a.filed_date)
-  );
+  const filings = [...(state.filings || [])].sort((a, b) => b.filed_date.localeCompare(a.filed_date));
   const tbody = document.getElementById('filings-body');
 
   if (!filings.length) {
@@ -324,7 +297,6 @@ function renderFilingsTable() {
   `).join('');
 }
 
-// ── Drawer ───────────────────────────────────────────────────────
 function openDrawer(cusip) {
   const allQuarters = Object.keys(state.holdingsByQuarter).sort();
   const history = allQuarters.map(q => {
@@ -338,41 +310,20 @@ function openDrawer(cusip) {
   document.getElementById('drawer-title').textContent = label;
   document.getElementById('drawer-cusip').textContent = `CUSIP: ${cusip}`;
 
-  // Stats
   document.getElementById('drawer-stats').innerHTML = `
-    <div class="drawer-stat">
-      <div class="drawer-stat-label">Shares</div>
-      <div class="drawer-stat-value">${fmt.num(latest?.shares || 0)}</div>
-    </div>
-    <div class="drawer-stat">
-      <div class="drawer-stat-label">Market Value</div>
-      <div class="drawer-stat-value">${fmt.usd((latest?.value_thousands || 0) * 1000)}</div>
-    </div>
-    <div class="drawer-stat">
-      <div class="drawer-stat-label">% Portfolio</div>
-      <div class="drawer-stat-value">${fmt.pct(latest?.pct_of_portfolio || 0)}</div>
-    </div>
-    <div class="drawer-stat">
-      <div class="drawer-stat-label">Quarters held</div>
-      <div class="drawer-stat-value">${history.filter(h => h.shares > 0).length}</div>
-    </div>
+    <div class="drawer-stat"><div class="drawer-stat-label">Shares</div><div class="drawer-stat-value">${fmt.num(latest?.shares || 0)}</div></div>
+    <div class="drawer-stat"><div class="drawer-stat-label">Market Value</div><div class="drawer-stat-value">${fmt.usd((latest?.value_thousands || 0) * 1000)}</div></div>
+    <div class="drawer-stat"><div class="drawer-stat-label">% Portfolio</div><div class="drawer-stat-value">${fmt.pct(latest?.pct_of_portfolio || 0)}</div></div>
+    <div class="drawer-stat"><div class="drawer-stat-label">Quarters held</div><div class="drawer-stat-value">${history.filter(h => h.shares > 0).length}</div></div>
   `;
 
-  // Sparkline
   const ctx = document.getElementById('sparkline-chart').getContext('2d');
   if (state.sparklineChart) state.sparklineChart.destroy();
   state.sparklineChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: history.map(h => h.quarter),
-      datasets: [{
-        data: history.map(h => h.shares),
-        borderColor: '#6e40c9',
-        backgroundColor: '#6e40c922',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 3,
-      }],
+      datasets: [{ data: history.map(h => h.shares), borderColor: '#6e40c9', backgroundColor: '#6e40c922', fill: true, tension: 0.3, pointRadius: 3 }],
     },
     options: {
       responsive: true,
@@ -385,7 +336,6 @@ function openDrawer(cusip) {
     },
   });
 
-  // History table
   document.getElementById('drawer-history-body').innerHTML = history.map(h => `
     <tr>
       <td>${h.quarter}</td>
@@ -404,9 +354,7 @@ function closeDrawer() {
   document.getElementById('detail-drawer').classList.remove('open');
 }
 
-// ── Event Binding ─────────────────────────────────────────────────
 function bindEvents() {
-  // Tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -416,25 +364,21 @@ function bindEvents() {
     });
   });
 
-  // Search filter
   document.getElementById('search-input').addEventListener('input', e => {
     state.filter = e.target.value;
     renderHoldingsTable();
   });
 
-  // Quarter select
   document.getElementById('quarter-select').addEventListener('change', e => {
     state.activeQuarter = e.target.value || state.meta.latest_quarter;
     renderHoldingsTable();
   });
 
-  // Show exited toggle
   document.getElementById('show-exited').addEventListener('change', e => {
     state.showExited = e.target.checked;
     renderHoldingsTable();
   });
 
-  // Sort headers
   document.querySelectorAll('th.sortable').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.col;
@@ -444,18 +388,14 @@ function bindEvents() {
         state.sortCol = col;
         state.sortDir = 'desc';
       }
-      document.querySelectorAll('th.sortable').forEach(t => {
-        t.classList.remove('sort-asc', 'sort-desc');
-      });
+      document.querySelectorAll('th.sortable').forEach(t => t.classList.remove('sort-asc', 'sort-desc'));
       th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
       renderHoldingsTable();
     });
   });
 
-  // Drawer close
   document.getElementById('drawer-close').addEventListener('click', closeDrawer);
   document.getElementById('drawer-overlay').addEventListener('click', closeDrawer);
 }
 
-// ── Init ─────────────────────────────────────────────────────────
 boot();

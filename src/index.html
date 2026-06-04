@@ -8,7 +8,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <!-- Header -->
   <header class="site-header">
     <div class="header-inner">
       <div class="header-title">
@@ -24,8 +23,6 @@
   </header>
 
   <main class="container">
-
-    <!-- Top stats row -->
     <section class="stats-row" id="stats-row">
       <div class="stat-card">
         <div class="stat-label">Total Portfolio Value</div>
@@ -48,7 +45,6 @@
       </div>
     </section>
 
-    <!-- Nav tabs -->
     <nav class="tab-nav">
       <button class="tab-btn active" data-tab="holdings">Holdings Table</button>
       <button class="tab-btn" data-tab="charts">Historical Charts</button>
@@ -56,7 +52,6 @@
       <button class="tab-btn" data-tab="filings">Filing History</button>
     </nav>
 
-    <!-- Tab: Holdings Table -->
     <section class="tab-panel active" id="tab-holdings">
       <div class="table-toolbar">
         <input type="text" id="search-input" placeholder="Filter by ticker or company…" />
@@ -86,7 +81,6 @@
       </div>
     </section>
 
-    <!-- Tab: Historical Charts -->
     <section class="tab-panel" id="tab-charts">
       <div class="chart-header">
         <h2>Top Holdings Over Time</h2>
@@ -97,7 +91,6 @@
       </div>
     </section>
 
-    <!-- Tab: Composition -->
     <section class="tab-panel" id="tab-composition">
       <div class="composition-grid">
         <div class="chart-half">
@@ -114,7 +107,6 @@
       </div>
     </section>
 
-    <!-- Tab: Filing History -->
     <section class="tab-panel" id="tab-filings">
       <h2>13F Filing History</h2>
       <div class="table-wrap">
@@ -133,10 +125,8 @@
         </table>
       </div>
     </section>
-
   </main>
 
-  <!-- Drawer: position detail -->
   <div class="drawer-overlay" id="drawer-overlay"></div>
   <aside class="detail-drawer" id="detail-drawer">
     <button class="drawer-close" id="drawer-close">✕</button>

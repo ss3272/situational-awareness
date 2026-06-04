@@ -1,0 +1,61 @@
+name: Update SEC 13F Data
+
+on:
+  schedule:
+    - cron: '0 7 * * *'   # 7:00 AM UTC daily (after SEC overnight processing)
+  workflow_dispatch:        # Manual trigger from Actions tab
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch new 13F filings from SEC EDGAR
+        run: python scripts/fetch_filings.py
+
+      - name: Resolve CUSIP → ticker symbols via OpenFIGI
+        run: python scripts/resolve_tickers.py
+
+      - name: Build dashboard JSON data
+        run: python scripts/build_data.py
+
+      - name: Commit updated data (if any changes)
+        run: |
+          git config user.name "sec-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git diff --quiet data/ || (
+            git add data/ &&
+            git commit -m "data: 13F update $(date -u +%Y-%m-%d)" &&
+            git push
+          )
+
+      - name: Copy site files to docs/
+        run: |
+          mkdir -p docs
+          cp -r src/. docs/
+          cp -r data docs/data
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

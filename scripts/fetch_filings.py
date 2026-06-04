@@ -6,7 +6,6 @@ Delta-only: skips filings already present in data/filings.json.
 """
 
 import json
-import os
 import sys
 import time
 import urllib.request
@@ -21,13 +20,15 @@ DATA_DIR = ROOT / "data"
 HEADERS = {
     "User-Agent": "situational-awareness-dashboard saransh.mega@gmail.com",
     "Accept-Encoding": "gzip, deflate",
-    "Host": "data.sec.gov",
 }
 REQUEST_DELAY = 0.11  # ~9 req/sec, safely under the 10/sec limit
 
 
 def fetch(url: str, retries: int = 3) -> bytes:
-    req = urllib.request.Request(url, headers={**HEADERS, "Host": urllib.parse.urlparse(url).netloc})
+    req = urllib.request.Request(
+        url,
+        headers={**HEADERS, "Host": urllib.parse.urlparse(url).netloc},
+    )
     for attempt in range(retries):
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
@@ -39,15 +40,15 @@ def fetch(url: str, retries: int = 3) -> bytes:
                 time.sleep(wait)
             else:
                 raise
-        except urllib.error.URLError as e:
+        except urllib.error.URLError:
             if attempt == retries - 1:
                 raise
             time.sleep(2 ** attempt)
     raise RuntimeError(f"Failed to fetch {url} after {retries} attempts")
 
 
-def resolve_cik() -> str:
-    """Auto-resolve CIK for Situational Awareness LP via EDGAR company search."""
+def resolve_cik() -> str | None:
+    """Auto-resolve CIK for Situational Awareness LP. Returns None if not found."""
     meta_path = DATA_DIR / "meta.json"
     meta = json.loads(meta_path.read_text())
     if meta.get("cik"):
@@ -55,8 +56,9 @@ def resolve_cik() -> str:
         return str(meta["cik"]).zfill(10)
 
     print("Searching EDGAR for 'Situational Awareness LP'...")
-    search_terms = ["situational+awareness+lp", "situational+awareness"]
-    for term in search_terms:
+
+    # Try full-text search first
+    for term in ["situational+awareness+lp", "situational+awareness"]:
         url = f"https://efts.sec.gov/LATEST/search-index?q=%22{term}%22&forms=13F-HR"
         time.sleep(REQUEST_DELAY)
         try:
@@ -65,22 +67,25 @@ def resolve_cik() -> str:
             hits = result.get("hits", {}).get("hits", [])
             for hit in hits:
                 src = hit.get("_source", {})
-                entity = src.get("entity_name", "") or src.get("display_names", [""])[0]
+                entity = src.get("entity_name", "") or ""
                 if "situational awareness" in entity.lower():
                     entity_id = src.get("entity_id", "")
                     if entity_id:
-                        cik_padded = str(entity_id).zfill(10)
                         print(f"Found entity: {entity}, CIK: {entity_id}")
                         meta["cik"] = entity_id
                         meta["entity_name"] = entity
                         meta_path.write_text(json.dumps(meta, indent=2))
-                        return cik_padded
+                        return str(entity_id).zfill(10)
         except Exception as e:
-            print(f"  Search failed for '{term}': {e}")
+            print(f"  EDGAR full-text search failed for '{term}': {e}")
 
-    # Fallback: try company search API
-    print("Trying EDGAR company search API...")
-    url = "https://www.sec.gov/cgi-bin/browse-edgar?company=situational+awareness&CIK=&type=13F&dateb=&owner=include&count=40&search_text=&action=getcompany&output=atom"
+    # Fallback: company search Atom feed
+    print("Trying EDGAR company search...")
+    url = (
+        "https://www.sec.gov/cgi-bin/browse-edgar"
+        "?company=situational+awareness&CIK=&type=13F"
+        "&dateb=&owner=include&count=40&search_text=&action=getcompany&output=atom"
+    )
     time.sleep(REQUEST_DELAY)
     try:
         data = fetch(url)
@@ -101,17 +106,18 @@ def resolve_cik() -> str:
     except Exception as e:
         print(f"  Company search failed: {e}")
 
-    print("ERROR: Could not auto-resolve CIK. Please set it manually in data/meta.json.")
-    print("Search for it at: https://www.sec.gov/cgi-bin/browse-edgar?company=situational+awareness&type=13F&action=getcompany")
-    sys.exit(1)
+    print("WARNING: Could not resolve CIK for Situational Awareness LP.")
+    print("The fund may not have filed 13F reports yet (required only if AUM >= $100M).")
+    print("To set manually: edit data/meta.json and set the 'cik' field.")
+    print("Search: https://www.sec.gov/cgi-bin/browse-edgar?company=situational+awareness&type=13F&action=getcompany")
+    return None
 
 
 def get_filing_xml_url(cik_padded: str, accession_raw: str) -> str | None:
-    """Find the XML info table file URL within a filing."""
-    accession_dashed = accession_raw.replace("-", "")
+    accession_nodash = accession_raw.replace("-", "")
     idx_url = (
         f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/"
-        f"{accession_dashed}/{accession_raw}-index.json"
+        f"{accession_nodash}/{accession_raw}-index.json"
     )
     time.sleep(REQUEST_DELAY)
     try:
@@ -121,10 +127,16 @@ def get_filing_xml_url(cik_padded: str, accession_raw: str) -> str | None:
             name = doc.get("name", "").lower()
             doc_type = doc.get("type", "").lower()
             if ("infotable" in name or name.endswith(".xml")) and "primary" not in doc_type:
-                return f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/{accession_dashed}/{doc['name']}"
+                return (
+                    f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/"
+                    f"{accession_nodash}/{doc['name']}"
+                )
         for doc in idx.get("documents", []):
             if doc.get("name", "").lower().endswith(".xml"):
-                return f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/{accession_dashed}/{doc['name']}"
+                return (
+                    f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/"
+                    f"{accession_nodash}/{doc['name']}"
+                )
     except Exception as e:
         print(f"  Could not get index for {accession_raw}: {e}")
     return None
@@ -132,6 +144,10 @@ def get_filing_xml_url(cik_padded: str, accession_raw: str) -> str | None:
 
 def main():
     cik_padded = resolve_cik()
+    if cik_padded is None:
+        print("No CIK found — skipping data fetch. Dashboard will show empty state.")
+        return  # exit 0, workflow continues to deploy
+
     cik_int = int(cik_padded)
 
     filings_path = DATA_DIR / "filings.json"
@@ -141,7 +157,12 @@ def main():
     print(f"\nFetching submission history for CIK {cik_padded}...")
     subs_url = f"https://data.sec.gov/submissions/CIK{cik_padded}.json"
     time.sleep(REQUEST_DELAY)
-    subs_data = json.loads(fetch(subs_url))
+    try:
+        subs_data = json.loads(fetch(subs_url))
+    except Exception as e:
+        print(f"ERROR fetching submissions: {e}")
+        print("Skipping data fetch — dashboard will show existing data.")
+        return
 
     entity_name = subs_data.get("name", "Situational Awareness LP")
     print(f"Entity: {entity_name}")
@@ -162,29 +183,28 @@ def main():
                 "period": periods[i],
             })
 
-    older_files = subs_data.get("filings", {}).get("files", [])
-    for older_ref in older_files:
+    for older_ref in subs_data.get("filings", {}).get("files", []):
         older_url = f"https://data.sec.gov/submissions/{older_ref['name']}"
         time.sleep(REQUEST_DELAY)
         try:
             older_data = json.loads(fetch(older_url))
-            o_forms = older_data.get("form", [])
-            o_accessions = older_data.get("accessionNumber", [])
-            o_dates = older_data.get("filingDate", [])
-            o_periods = older_data.get("reportDate", [])
-            for i, form in enumerate(o_forms):
+            for i, form in enumerate(older_data.get("form", [])):
                 if form in ("13F-HR", "13F-HR/A"):
                     all_13f.append({
                         "form": form,
-                        "accession_number": o_accessions[i],
-                        "filed_date": o_dates[i],
-                        "period": o_periods[i],
+                        "accession_number": older_data["accessionNumber"][i],
+                        "filed_date": older_data["filingDate"][i],
+                        "period": older_data["reportDate"][i],
                     })
         except Exception as e:
             print(f"  Could not fetch older filings {older_ref['name']}: {e}")
 
-    print(f"Found {len(all_13f)} total 13F filings, {len(known_accessions)} already stored.")
+    if not all_13f:
+        print("No 13F filings found for this entity (AUM may be below $100M threshold).")
+        print("Dashboard will show empty state until filings are available.")
+        return
 
+    print(f"Found {len(all_13f)} total 13F filings, {len(known_accessions)} already stored.")
     new_filings = [f for f in all_13f if f["accession_number"] not in known_accessions]
     print(f"New filings to fetch: {len(new_filings)}")
 
@@ -200,8 +220,7 @@ def main():
 
     for filing in sorted(new_filings, key=lambda x: x["filed_date"]):
         acc = filing["accession_number"]
-        period = filing["period"]
-        quarter_key = period_to_quarter(period)
+        quarter_key = period_to_quarter(filing["period"])
 
         print(f"\nFetching {filing['form']} for {quarter_key} (filed {filing['filed_date']}) ...")
         xml_url = get_filing_xml_url(cik_padded, acc)
@@ -229,23 +248,22 @@ def main():
             print(f"  Replacing existing {quarter_key} data with amendment")
         holdings_by_quarter[quarter_key] = holdings
 
-        filing_record = {
+        existing_filings.append({
             **filing,
             "quarter": quarter_key,
             "total_value_thousands": total_value,
             "num_holdings": len(holdings),
-            "edgar_url": f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik_int}&type=13F&dateb=&owner=include&count=40",
+            "edgar_url": f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik_int}&type=13F",
             "filing_url": f"https://www.sec.gov/Archives/edgar/data/{cik_int}/{acc.replace('-','')}/{acc}-index.htm",
-        }
-        existing_filings.append(filing_record)
+        })
         known_accessions.add(acc)
 
     filings_path.write_text(json.dumps(existing_filings, indent=2))
     holdings_by_quarter_path.write_text(json.dumps(holdings_by_quarter, indent=2))
 
+    import datetime
     meta_path = DATA_DIR / "meta.json"
     meta = json.loads(meta_path.read_text())
-    import datetime
     meta["cik"] = cik_int
     meta["entity_name"] = entity_name
     meta["last_updated"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -259,8 +277,7 @@ def main():
 
 def period_to_quarter(period_date: str) -> str:
     year, month, _ = period_date.split("-")
-    quarter = (int(month) - 1) // 3 + 1
-    return f"{year}-Q{quarter}"
+    return f"{year}-Q{(int(month) - 1) // 3 + 1}"
 
 
 if __name__ == "__main__":

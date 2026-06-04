@@ -28,12 +28,15 @@ jobs:
 
       - name: Fetch new 13F filings from SEC EDGAR
         run: python scripts/fetch_filings.py
+        continue-on-error: true
 
-      - name: Resolve CUSIP → ticker symbols via OpenFIGI
+      - name: Resolve CUSIP -> ticker symbols via OpenFIGI
         run: python scripts/resolve_tickers.py
+        continue-on-error: true
 
       - name: Build dashboard JSON data
         run: python scripts/build_data.py
+        continue-on-error: true
 
       - name: Commit updated data (if any changes)
         run: |
@@ -44,12 +47,13 @@ jobs:
             git commit -m "data: 13F update $(date -u +%Y-%m-%d)" &&
             git push
           )
+        continue-on-error: true
 
       - name: Copy site files to docs/
         run: |
-          mkdir -p docs
+          mkdir -p docs/data
           cp -r src/. docs/
-          cp -r data docs/data
+          cp data/*.json docs/data/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

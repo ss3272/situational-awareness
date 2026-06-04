@@ -48,7 +48,7 @@ def fetch(url: str, retries: int = 3) -> bytes:
 
 
 def resolve_cik() -> str | None:
-    """Auto-resolve CIK for Situational Awareness LP. Returns None if not found."""
+    """Return CIK from cache or EDGAR search. Returns None if not found."""
     meta_path = DATA_DIR / "meta.json"
     meta = json.loads(meta_path.read_text())
     if meta.get("cik"):
@@ -56,97 +56,97 @@ def resolve_cik() -> str | None:
         return str(meta["cik"]).zfill(10)
 
     print("Searching EDGAR for 'Situational Awareness LP'...")
-
-    # Try full-text search first
     for term in ["situational+awareness+lp", "situational+awareness"]:
         url = f"https://efts.sec.gov/LATEST/search-index?q=%22{term}%22&forms=13F-HR"
         time.sleep(REQUEST_DELAY)
         try:
-            data = fetch(url)
-            result = json.loads(data)
-            hits = result.get("hits", {}).get("hits", [])
-            for hit in hits:
+            result = json.loads(fetch(url))
+            for hit in result.get("hits", {}).get("hits", []):
                 src = hit.get("_source", {})
-                entity = src.get("entity_name", "") or ""
+                entity = src.get("entity_name", "")
                 if "situational awareness" in entity.lower():
                     entity_id = src.get("entity_id", "")
                     if entity_id:
-                        print(f"Found entity: {entity}, CIK: {entity_id}")
+                        print(f"Found: {entity}, CIK: {entity_id}")
                         meta["cik"] = entity_id
                         meta["entity_name"] = entity
                         meta_path.write_text(json.dumps(meta, indent=2))
                         return str(entity_id).zfill(10)
         except Exception as e:
-            print(f"  EDGAR full-text search failed for '{term}': {e}")
+            print(f"  EDGAR search failed for '{term}': {e}")
 
-    # Fallback: company search Atom feed
-    print("Trying EDGAR company search...")
-    url = (
-        "https://www.sec.gov/cgi-bin/browse-edgar"
-        "?company=situational+awareness&CIK=&type=13F"
-        "&dateb=&owner=include&count=40&search_text=&action=getcompany&output=atom"
-    )
-    time.sleep(REQUEST_DELAY)
-    try:
-        data = fetch(url)
-        root_el = ET.fromstring(data)
-        ns = {"atom": "http://www.w3.org/2005/Atom"}
-        for entry in root_el.findall("atom:entry", ns):
-            title = entry.findtext("atom:title", "", ns)
-            if "situational awareness" in title.lower():
-                content = entry.findtext("atom:content", "", ns)
-                cik_idx = content.find("CIK=")
-                if cik_idx >= 0:
-                    cik_str = content[cik_idx + 4 : cik_idx + 14].split("&")[0].strip()
-                    print(f"Found via company search: {title}, CIK: {cik_str}")
-                    meta["cik"] = int(cik_str)
-                    meta["entity_name"] = title.strip()
-                    meta_path.write_text(json.dumps(meta, indent=2))
-                    return cik_str.zfill(10)
-    except Exception as e:
-        print(f"  Company search failed: {e}")
-
-    print("WARNING: Could not resolve CIK for Situational Awareness LP.")
-    print("The fund may not have filed 13F reports yet (required only if AUM >= $100M).")
-    print("To set manually: edit data/meta.json and set the 'cik' field.")
-    print("Search: https://www.sec.gov/cgi-bin/browse-edgar?company=situational+awareness&type=13F&action=getcompany")
+    print("WARNING: CIK not found via search. Set data/meta.json 'cik' manually.")
     return None
 
 
-def get_filing_xml_url(cik_padded: str, accession_raw: str) -> str | None:
+def get_filing_xml_url(cik_int: int, accession_raw: str) -> str | None:
+    """
+    Find the information-table XML URL within a 13F filing.
+    Tries the JSON index first, then falls back to the HTML index.
+    """
     accession_nodash = accession_raw.replace("-", "")
-    idx_url = (
-        f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/"
-        f"{accession_nodash}/{accession_raw}-index.json"
-    )
+    base = f"https://www.sec.gov/Archives/edgar/data/{cik_int}/{accession_nodash}"
+
+    # --- Try JSON index ---
+    idx_url = f"{base}/{accession_raw}-index.json"
     time.sleep(REQUEST_DELAY)
     try:
-        data = fetch(idx_url)
-        idx = json.loads(data)
-        for doc in idx.get("documents", []):
+        idx = json.loads(fetch(idx_url))
+        docs = idx.get("documents", [])
+        print(f"  Index has {len(docs)} documents: {[d.get('type','?')+'/'+d.get('name','?') for d in docs]}")
+
+        # Priority 1: explicit INFORMATION TABLE type
+        for doc in docs:
+            if doc.get("type", "").upper() == "INFORMATION TABLE":
+                print(f"  Found info table by type: {doc['name']}")
+                return f"{base}/{doc['name']}"
+
+        # Priority 2: filename contains 'infotable'
+        for doc in docs:
+            if "infotable" in doc.get("name", "").lower():
+                print(f"  Found info table by filename: {doc['name']}")
+                return f"{base}/{doc['name']}"
+
+        # Priority 3: any .xml that isn't the cover page (type 13F-HR)
+        for doc in docs:
             name = doc.get("name", "").lower()
-            doc_type = doc.get("type", "").lower()
-            if ("infotable" in name or name.endswith(".xml")) and "primary" not in doc_type:
-                return (
-                    f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/"
-                    f"{accession_nodash}/{doc['name']}"
-                )
-        for doc in idx.get("documents", []):
+            doc_type = doc.get("type", "").upper()
+            if name.endswith(".xml") and doc_type not in ("13F-HR", "13F-HR/A", "13F-NT"):
+                print(f"  Found XML (fallback): {doc['name']} (type={doc_type})")
+                return f"{base}/{doc['name']}"
+
+        # Priority 4: any .xml at all (last resort)
+        for doc in docs:
             if doc.get("name", "").lower().endswith(".xml"):
-                return (
-                    f"https://www.sec.gov/Archives/edgar/data/{int(cik_padded)}/"
-                    f"{accession_nodash}/{doc['name']}"
-                )
+                print(f"  Found XML (last resort): {doc['name']}")
+                return f"{base}/{doc['name']}"
+
     except Exception as e:
-        print(f"  Could not get index for {accession_raw}: {e}")
+        print(f"  JSON index failed for {accession_raw}: {e}")
+
+    # --- Fallback: try common filename patterns ---
+    for candidate in ["infotable.xml", "form13fInfoTable.xml", "informationtable.xml"]:
+        url = f"{base}/{candidate}"
+        time.sleep(REQUEST_DELAY)
+        try:
+            fetch(url)  # just check it exists (200 = exists)
+            print(f"  Found via pattern guess: {candidate}")
+            return url
+        except urllib.error.HTTPError as e:
+            if e.code != 404:
+                print(f"  Pattern {candidate}: HTTP {e.code}")
+        except Exception:
+            pass
+
+    print(f"  Could not locate info table XML for {accession_raw}")
     return None
 
 
 def main():
     cik_padded = resolve_cik()
     if cik_padded is None:
-        print("No CIK found — skipping data fetch. Dashboard will show empty state.")
-        return  # exit 0, workflow continues to deploy
+        print("No CIK found. Dashboard will show empty state.")
+        return
 
     cik_int = int(cik_padded)
 
@@ -161,52 +161,48 @@ def main():
         subs_data = json.loads(fetch(subs_url))
     except Exception as e:
         print(f"ERROR fetching submissions: {e}")
-        print("Skipping data fetch — dashboard will show existing data.")
         return
 
     entity_name = subs_data.get("name", "Situational Awareness LP")
     print(f"Entity: {entity_name}")
 
     recent = subs_data.get("filings", {}).get("recent", {})
-    forms = recent.get("form", [])
-    accessions = recent.get("accessionNumber", [])
-    filed_dates = recent.get("filingDate", [])
-    periods = recent.get("reportDate", [])
-
-    all_13f = []
-    for i, form in enumerate(forms):
-        if form in ("13F-HR", "13F-HR/A"):
-            all_13f.append({
-                "form": form,
-                "accession_number": accessions[i],
-                "filed_date": filed_dates[i],
-                "period": periods[i],
-            })
+    all_13f = [
+        {
+            "form": recent["form"][i],
+            "accession_number": recent["accessionNumber"][i],
+            "filed_date": recent["filingDate"][i],
+            "period": recent["reportDate"][i],
+        }
+        for i, form in enumerate(recent.get("form", []))
+        if form in ("13F-HR", "13F-HR/A")
+    ]
 
     for older_ref in subs_data.get("filings", {}).get("files", []):
         older_url = f"https://data.sec.gov/submissions/{older_ref['name']}"
         time.sleep(REQUEST_DELAY)
         try:
-            older_data = json.loads(fetch(older_url))
-            for i, form in enumerate(older_data.get("form", [])):
-                if form in ("13F-HR", "13F-HR/A"):
-                    all_13f.append({
-                        "form": form,
-                        "accession_number": older_data["accessionNumber"][i],
-                        "filed_date": older_data["filingDate"][i],
-                        "period": older_data["reportDate"][i],
-                    })
+            older = json.loads(fetch(older_url))
+            all_13f += [
+                {
+                    "form": older["form"][i],
+                    "accession_number": older["accessionNumber"][i],
+                    "filed_date": older["filingDate"][i],
+                    "period": older["reportDate"][i],
+                }
+                for i, form in enumerate(older.get("form", []))
+                if form in ("13F-HR", "13F-HR/A")
+            ]
         except Exception as e:
             print(f"  Could not fetch older filings {older_ref['name']}: {e}")
 
     if not all_13f:
-        print("No 13F filings found for this entity (AUM may be below $100M threshold).")
-        print("Dashboard will show empty state until filings are available.")
+        print("No 13F filings found for this entity.")
         return
 
-    print(f"Found {len(all_13f)} total 13F filings, {len(known_accessions)} already stored.")
+    print(f"Found {len(all_13f)} 13F filings total, {len(known_accessions)} already stored.")
     new_filings = [f for f in all_13f if f["accession_number"] not in known_accessions]
-    print(f"New filings to fetch: {len(new_filings)}")
+    print(f"New filings to process: {len(new_filings)}")
 
     if not new_filings:
         print("No new filings. Data is up to date.")
@@ -217,15 +213,21 @@ def main():
 
     holdings_by_quarter_path = DATA_DIR / "holdings_by_quarter.json"
     holdings_by_quarter: dict = json.loads(holdings_by_quarter_path.read_text())
+    # Strip any enrichment keys from prior build runs so raw data stays clean
+    for q in list(holdings_by_quarter):
+        for h in holdings_by_quarter[q]:
+            for k in ("ticker", "display_name", "value_usd", "pct_of_portfolio",
+                      "qoq_status", "qoq_shares_delta", "qoq_value_delta"):
+                h.pop(k, None)
 
     for filing in sorted(new_filings, key=lambda x: x["filed_date"]):
         acc = filing["accession_number"]
         quarter_key = period_to_quarter(filing["period"])
 
-        print(f"\nFetching {filing['form']} for {quarter_key} (filed {filing['filed_date']}) ...")
-        xml_url = get_filing_xml_url(cik_padded, acc)
+        print(f"\nProcessing {filing['form']} for {quarter_key} (filed {filing['filed_date']})")
+        xml_url = get_filing_xml_url(cik_int, acc)
         if not xml_url:
-            print(f"  Skipping {acc}: could not locate XML info table")
+            print(f"  Skipping {acc}: info table XML not found")
             continue
 
         time.sleep(REQUEST_DELAY)
@@ -241,11 +243,15 @@ def main():
             print(f"  Skipping {acc}: parse error: {e}")
             continue
 
+        if not holdings:
+            print(f"  WARNING: parsed 0 holdings from {xml_url}")
+            continue
+
         total_value = sum(h["value_thousands"] for h in holdings)
         print(f"  Parsed {len(holdings)} holdings, total value ${total_value:,}k")
 
         if filing["form"] == "13F-HR/A" and quarter_key in holdings_by_quarter:
-            print(f"  Replacing existing {quarter_key} data with amendment")
+            print(f"  Replacing {quarter_key} data with amendment")
         holdings_by_quarter[quarter_key] = holdings
 
         existing_filings.append({

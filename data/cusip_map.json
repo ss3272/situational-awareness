@@ -1,1 +1,272 @@
-{}
+{
+  "007903107": {
+    "exchange": "US",
+    "name": "ADVANCED MICRO DEVICES",
+    "security_type": "Common Stock",
+    "ticker": "AMD"
+  },
+  "038169207": {
+    "exchange": "US",
+    "name": "APPLIED DIGITAL CORP",
+    "security_type": "Common Stock",
+    "ticker": "APLD"
+  },
+  "05614L209": {
+    "exchange": "US",
+    "name": "BABCOCK & WILCOX ENTERPR",
+    "security_type": "Common Stock",
+    "ticker": "BW"
+  },
+  "09173B107": {
+    "exchange": "GR",
+    "name": "BITFARMS LTD/CANADA",
+    "security_type": "Common Stock",
+    "ticker": "1B2"
+  },
+  "093712107": {
+    "exchange": "US",
+    "name": "BLOOM ENERGY CORP- A",
+    "security_type": "Common Stock",
+    "ticker": "BE"
+  },
+  "093712AH0": {
+    "exchange": "TRACE",
+    "name": "BLOOM ENERGY CORP",
+    "security_type": "US DOMESTIC",
+    "ticker": "BE 2.5 08/15/25"
+  },
+  "11135F101": {
+    "exchange": "US",
+    "name": "BROADCOM INC",
+    "security_type": "Common Stock",
+    "ticker": "AVGO"
+  },
+  "17253J106": {
+    "exchange": "US",
+    "name": "CIPHER DIGITAL INC",
+    "security_type": "Common Stock",
+    "ticker": "CIFR"
+  },
+  "17253JAA4": {
+    "exchange": "TRACE",
+    "name": "CIPHER DIGITAL INC",
+    "security_type": "US DOMESTIC",
+    "ticker": "CIFR 1.75 05/15/30"
+  },
+  "18452B209": {
+    "exchange": "US",
+    "name": "CLEANSPARK INC",
+    "security_type": "Common Stock",
+    "ticker": "CLSK"
+  },
+  "19247G107": {
+    "exchange": "US",
+    "name": "COHERENT CORP",
+    "security_type": "Common Stock",
+    "ticker": "COHR"
+  },
+  "21037T109": {
+    "exchange": "US",
+    "name": "CONSTELLATION ENERGY",
+    "security_type": "Common Stock",
+    "ticker": "CEG"
+  },
+  "21873S108": {
+    "exchange": "US",
+    "name": "COREWEAVE INC-CL A",
+    "security_type": "Common Stock",
+    "ticker": "CRWV"
+  },
+  "21874A106": {
+    "exchange": "US",
+    "name": "CORE SCIENTIFIC INC",
+    "security_type": "Common Stock",
+    "ticker": "CORZ"
+  },
+  "219350105": {
+    "exchange": "US",
+    "name": "CORNING INC",
+    "security_type": "Common Stock",
+    "ticker": "GLW"
+  },
+  "26884L109": {
+    "exchange": "US",
+    "name": "EQT CORP",
+    "security_type": "Common Stock",
+    "ticker": "EQT"
+  },
+  "35834F104": {
+    "exchange": "US",
+    "name": "T1 ENERGY INC",
+    "security_type": "Common Stock",
+    "ticker": "TE"
+  },
+  "36317J209": {
+    "exchange": "US",
+    "name": "GALAXY DIGITAL INC-A",
+    "security_type": "Common Stock",
+    "ticker": "GLXY"
+  },
+  "433921103": {
+    "exchange": "CN",
+    "name": "HIVE DIGITAL TECHNOLOGIES LT",
+    "security_type": "Common Stock",
+    "ticker": "HIVE"
+  },
+  "44812J104": {
+    "exchange": "CN",
+    "name": "HUT 8 CORP",
+    "security_type": "Common Stock",
+    "ticker": "HUT"
+  },
+  "456788108": {
+    "exchange": "US",
+    "name": "INFOSYS LTD-SP ADR",
+    "security_type": "ADR",
+    "ticker": "INFY"
+  },
+  "458140100": {
+    "exchange": "US",
+    "name": "INTEL CORP",
+    "security_type": "Common Stock",
+    "ticker": "INTC"
+  },
+  "49427F108": {
+    "exchange": "US",
+    "name": "KILROY REALTY CORP",
+    "security_type": "REIT",
+    "ticker": "KRC"
+  },
+  "53115L104": {
+    "exchange": "US",
+    "name": "LIBERTY ENERGY INC",
+    "security_type": "Common Stock",
+    "ticker": "LBRT"
+  },
+  "55024U109": {
+    "exchange": "US",
+    "name": "LUMENTUM HOLDINGS INC",
+    "security_type": "Common Stock",
+    "ticker": "LITE"
+  },
+  "55024UAD1": {
+    "exchange": "TRACE",
+    "name": "LUMENTUM HOLDINGS INC",
+    "security_type": "US DOMESTIC",
+    "ticker": "LITE 0.5 12/15/26"
+  },
+  "573874104": {
+    "exchange": "US",
+    "name": "MARVELL TECHNOLOGY INC",
+    "security_type": "Common Stock",
+    "ticker": "MRVL"
+  },
+  "595112103": {
+    "exchange": "US",
+    "name": "MICRON TECHNOLOGY INC",
+    "security_type": "Common Stock",
+    "ticker": "MU"
+  },
+  "607828100": {
+    "exchange": "US",
+    "name": "MODINE MANUFACTURING CO",
+    "security_type": "Common Stock",
+    "ticker": "MOD"
+  },
+  "67066G104": {
+    "exchange": "US",
+    "name": "NVIDIA CORP",
+    "security_type": "Common Stock",
+    "ticker": "NVDA"
+  },
+  "683344105": {
+    "exchange": "US",
+    "name": "ONTO INNOVATION INC",
+    "security_type": "Common Stock",
+    "ticker": "ONTO"
+  },
+  "68389X105": {
+    "exchange": "PE",
+    "name": "ORACLE CORP",
+    "security_type": "Common Stock",
+    "ticker": "ORCL"
+  },
+  "73933G202": {
+    "exchange": "US",
+    "name": "POWER SOLUTIONS INTERNATIONA",
+    "security_type": "Common Stock",
+    "ticker": "PSIX"
+  },
+  "74347M108": {
+    "exchange": "US",
+    "name": "PROPETRO HOLDING CORP",
+    "security_type": "Common Stock",
+    "ticker": "PUMP"
+  },
+  "767292105": {
+    "exchange": "US",
+    "name": "RIOT PLATFORMS INC",
+    "security_type": "Common Stock",
+    "ticker": "RIOT"
+  },
+  "778920306": {
+    "exchange": "US",
+    "name": "SHARONAI HOLDINGS INC",
+    "security_type": "Common Stock",
+    "ticker": "SHAZ"
+  },
+  "80004C200": {
+    "exchange": "US",
+    "name": "SANDISK CORP",
+    "security_type": "Common Stock",
+    "ticker": "SNDK"
+  },
+  "83418M103": {
+    "exchange": "US",
+    "name": "SOLARIS ENERGY INFRASTRUCTUR",
+    "security_type": "Common Stock",
+    "ticker": "SEI"
+  },
+  "874039100": {
+    "exchange": "US",
+    "name": "TAIWAN SEMICONDUCTOR-SP ADR",
+    "security_type": "ADR",
+    "ticker": "TSM"
+  },
+  "87422Q109": {
+    "exchange": "US",
+    "name": "TALEN ENERGY CORP",
+    "security_type": "Common Stock",
+    "ticker": "TLN"
+  },
+  "92189F106": {
+    "exchange": "US",
+    "name": "VANECK GOLD MINERS ETF",
+    "security_type": "ETP",
+    "ticker": "GDX"
+  },
+  "92189F676": {
+    "exchange": "US",
+    "name": "VANECK SEMICONDUCTOR ETF",
+    "security_type": "ETP",
+    "ticker": "SMH"
+  },
+  "92537N108": {
+    "exchange": "US",
+    "name": "VERTIV HOLDINGS CO-A",
+    "security_type": "Common Stock",
+    "ticker": "VRT"
+  },
+  "92840M102": {
+    "exchange": "US",
+    "name": "VISTRA CORP",
+    "security_type": "Common Stock",
+    "ticker": "VST"
+  },
+  "958102AT2": {
+    "exchange": "TRACE",
+    "name": "WESTERN DIGITAL CORP",
+    "security_type": "US DOMESTIC",
+    "ticker": "WDC 3 11/15/28"
+  }
+}

@@ -1,1 +1,68 @@
-[]
+[
+  {
+    "form": "13F-HR",
+    "accession_number": "0000935836-25-000120",
+    "filed_date": "2025-02-12",
+    "period": "2024-12-31",
+    "quarter": "2024-Q4",
+    "total_value_thousands": 254811,
+    "num_holdings": 6,
+    "edgar_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=2045724&type=13F&dateb=&owner=include&count=40",
+    "filing_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583625000120/0000935836-25-000120-index.htm"
+  },
+  {
+    "form": "13F-HR",
+    "accession_number": "0002045724-25-000002",
+    "filed_date": "2025-05-14",
+    "period": "2025-03-31",
+    "quarter": "2025-Q1",
+    "total_value_thousands": 1005564,
+    "num_holdings": 12,
+    "edgar_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=2045724&type=13F&dateb=&owner=include&count=40",
+    "filing_url": "https://www.sec.gov/Archives/edgar/data/2045724/000204572425000002/0002045724-25-000002-index.htm"
+  },
+  {
+    "form": "13F-HR",
+    "accession_number": "0002045724-25-000006",
+    "filed_date": "2025-08-14",
+    "period": "2025-06-30",
+    "quarter": "2025-Q2",
+    "total_value_thousands": 2123019,
+    "num_holdings": 9,
+    "edgar_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=2045724&type=13F&dateb=&owner=include&count=40",
+    "filing_url": "https://www.sec.gov/Archives/edgar/data/2045724/000204572425000006/0002045724-25-000006-index.htm"
+  },
+  {
+    "form": "13F-HR",
+    "accession_number": "0002045724-25-000008",
+    "filed_date": "2025-11-14",
+    "period": "2025-09-30",
+    "quarter": "2025-Q3",
+    "total_value_thousands": 4138357,
+    "num_holdings": 28,
+    "edgar_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=2045724&type=13F&dateb=&owner=include&count=40",
+    "filing_url": "https://www.sec.gov/Archives/edgar/data/2045724/000204572425000008/0002045724-25-000008-index.htm"
+  },
+  {
+    "form": "13F-HR",
+    "accession_number": "0002045724-26-000002",
+    "filed_date": "2026-02-11",
+    "period": "2025-12-31",
+    "quarter": "2025-Q4",
+    "total_value_thousands": 5516746,
+    "num_holdings": 29,
+    "edgar_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=2045724&type=13F&dateb=&owner=include&count=40",
+    "filing_url": "https://www.sec.gov/Archives/edgar/data/2045724/000204572426000002/0002045724-26-000002-index.htm"
+  },
+  {
+    "form": "13F-HR",
+    "accession_number": "0002045724-26-000008",
+    "filed_date": "2026-05-18",
+    "period": "2026-03-31",
+    "quarter": "2026-Q1",
+    "total_value_thousands": 13676637,
+    "num_holdings": 42,
+    "edgar_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=2045724&type=13F&dateb=&owner=include&count=40",
+    "filing_url": "https://www.sec.gov/Archives/edgar/data/2045724/000204572426000008/0002045724-26-000008-index.htm"
+  }
+]

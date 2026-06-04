@@ -1,7 +1,367 @@
 {
   "cik": 2045724,
   "entity_name": "Situational Awareness LP",
-  "last_updated": null,
-  "latest_quarter": null,
-  "total_filing_count": 0
+  "last_updated": "2026-06-04T01:49:08Z",
+  "latest_quarter": "2026-Q1",
+  "total_filing_count": 6,
+  "chart_series": {
+    "92189F676": {
+      "label": "SMH",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 570058000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 2042716000,
+          "shares": 0
+        }
+      ]
+    },
+    "67066G104": {
+      "label": "NVDA",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 298528000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 1568257000,
+          "shares": 0
+        }
+      ]
+    },
+    "68389X105": {
+      "label": "ORCL",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 1072873000,
+          "shares": 0
+        }
+      ]
+    },
+    "11135F101": {
+      "label": "AVGO",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 117201000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 328466000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 75879000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 1006247000,
+          "shares": 0
+        }
+      ]
+    },
+    "007903107": {
+      "label": "AMD",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 969160000,
+          "shares": 0
+        }
+      ]
+    },
+    "093712107": {
+      "label": "BE",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 875505000,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 878707000,
+          "shares": 0
+        }
+      ]
+    },
+    "80004C200": {
+      "label": "SNDK",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 12903000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 250245000,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 724363000,
+          "shares": 0
+        }
+      ]
+    },
+    "595112103": {
+      "label": "MU",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 50196000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 583686000,
+          "shares": 0
+        }
+      ]
+    },
+    "21873S108": {
+      "label": "CRWV",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 45423000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 563200000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 774426000,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 556073000,
+          "shares": 0
+        }
+      ]
+    },
+    "874039100": {
+      "label": "TSM",
+      "data": [
+        {
+          "quarter": "2024-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q1",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q2",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q3",
+          "value_usd": 75408000,
+          "shares": 0
+        },
+        {
+          "quarter": "2025-Q4",
+          "value_usd": 0,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q1",
+          "value_usd": 535110000,
+          "shares": 0
+        }
+      ]
+    }
+  },
+  "quarters": [
+    "2024-Q4",
+    "2025-Q1",
+    "2025-Q2",
+    "2025-Q3",
+    "2025-Q4",
+    "2026-Q1"
+  ]
 }

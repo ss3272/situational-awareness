@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Situational Awareness LP — SEC 13F Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-title">
+        <div class="fund-badge">SEC EDGAR · 13F</div>
+        <h1>Situational Awareness LP</h1>
+        <p class="manager-name">Leopold Aschenbrenner · Institutional Holdings Dashboard</p>
+      </div>
+      <div class="header-meta" id="header-meta">
+        <span class="last-updated" id="last-updated">Loading…</span>
+        <span class="latest-quarter" id="latest-quarter"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Top stats row -->
+    <section class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Portfolio Value</div>
+        <div class="stat-value" id="stat-total-value">—</div>
+        <div class="stat-sub" id="stat-quarter">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Number of Holdings</div>
+        <div class="stat-value" id="stat-holdings">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Largest Position</div>
+        <div class="stat-value" id="stat-largest">—</div>
+        <div class="stat-sub" id="stat-largest-pct">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Filings</div>
+        <div class="stat-value" id="stat-filings">—</div>
+        <div class="stat-sub">13F-HR filings on record</div>
+      </div>
+    </section>
+
+    <!-- Nav tabs -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="holdings">Holdings Table</button>
+      <button class="tab-btn" data-tab="charts">Historical Charts</button>
+      <button class="tab-btn" data-tab="composition">Composition</button>
+      <button class="tab-btn" data-tab="filings">Filing History</button>
+    </nav>
+
+    <!-- Tab: Holdings Table -->
+    <section class="tab-panel active" id="tab-holdings">
+      <div class="table-toolbar">
+        <input type="text" id="search-input" placeholder="Filter by ticker or company…" />
+        <select id="quarter-select">
+          <option value="">Latest Quarter</option>
+        </select>
+        <label class="toggle-label">
+          <input type="checkbox" id="show-exited" />
+          Show exited positions
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table id="holdings-table">
+          <thead>
+            <tr>
+              <th data-col="ticker" class="sortable">Ticker <span class="sort-arrow">↕</span></th>
+              <th data-col="display_name" class="sortable">Company <span class="sort-arrow">↕</span></th>
+              <th data-col="shares" class="sortable num">Shares <span class="sort-arrow">↕</span></th>
+              <th data-col="value_usd" class="sortable num">Market Value <span class="sort-arrow">↕</span></th>
+              <th data-col="pct_of_portfolio" class="sortable num">% Portfolio <span class="sort-arrow">↕</span></th>
+              <th data-col="qoq_shares_delta" class="sortable num">QoQ Shares Δ <span class="sort-arrow">↕</span></th>
+              <th data-col="qoq_value_delta" class="sortable num">QoQ Value Δ <span class="sort-arrow">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="holdings-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Tab: Historical Charts -->
+    <section class="tab-panel" id="tab-charts">
+      <div class="chart-header">
+        <h2>Top Holdings Over Time</h2>
+        <p class="chart-sub">Dollar value of top 10 positions across all quarters</p>
+      </div>
+      <div class="chart-container">
+        <canvas id="history-chart"></canvas>
+      </div>
+    </section>
+
+    <!-- Tab: Composition -->
+    <section class="tab-panel" id="tab-composition">
+      <div class="composition-grid">
+        <div class="chart-half">
+          <h2>Portfolio Composition</h2>
+          <p class="chart-sub">Latest quarter — by market value</p>
+          <div class="donut-wrap">
+            <canvas id="donut-chart"></canvas>
+          </div>
+        </div>
+        <div class="chart-half">
+          <h2>Top 10 Holdings</h2>
+          <div id="composition-legend" class="legend-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Filing History -->
+    <section class="tab-panel" id="tab-filings">
+      <h2>13F Filing History</h2>
+      <div class="table-wrap">
+        <table id="filings-table">
+          <thead>
+            <tr>
+              <th>Quarter</th>
+              <th>Filed Date</th>
+              <th>Form Type</th>
+              <th class="num"># Holdings</th>
+              <th class="num">Total Value</th>
+              <th>EDGAR Link</th>
+            </tr>
+          </thead>
+          <tbody id="filings-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Drawer: position detail -->
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <aside class="detail-drawer" id="detail-drawer">
+    <button class="drawer-close" id="drawer-close">✕</button>
+    <h2 id="drawer-title">—</h2>
+    <p id="drawer-cusip" class="drawer-cusip"></p>
+    <div class="drawer-stats" id="drawer-stats"></div>
+    <div class="drawer-chart-wrap">
+      <canvas id="sparkline-chart"></canvas>
+    </div>
+    <table id="drawer-history-table">
+      <thead>
+        <tr><th>Quarter</th><th class="num">Shares</th><th class="num">Value (USD)</th><th class="num">% Portfolio</th></tr>
+      </thead>
+      <tbody id="drawer-history-body"></tbody>
+    </table>
+  </aside>
+
+  <footer class="site-footer">
+    <p>Data sourced from <a href="https://www.sec.gov/cgi-bin/browse-edgar" target="_blank" rel="noopener">SEC EDGAR</a> ·
+       13F-HR filings · Auto-updated daily via GitHub Actions ·
+       <a href="https://github.com/ss3272/rbm-emulator" target="_blank" rel="noopener">View source</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

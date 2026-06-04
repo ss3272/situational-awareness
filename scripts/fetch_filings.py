@@ -27,8 +27,15 @@ REQUEST_DELAY = 0.15  # safely under SEC 10 req/sec limit
 # Known filings to seed even if submissions API returns nothing.
 # Format: (accession_with_dashes, period_end_date, filed_date, form_type)
 SEED_FILINGS = [
-    ("0002045724-26-000008", "2026-03-31", "2026-05-15", "13F-HR"),
+    ("0000935836-25-000120", "2024-12-31", "2025-02-12", "13F-HR"),
+    ("0002045724-25-000002", "2025-03-31", "2025-05-14", "13F-HR"),
+    ("0002045724-25-000006", "2025-06-30", "2025-08-14", "13F-HR"),
+    ("0002045724-25-000008", "2025-09-30", "2025-11-14", "13F-HR"),
+    ("0002045724-26-000002", "2025-12-31", "2026-02-11", "13F-HR"),
+    ("0002045724-26-000008", "2026-03-31", "2026-05-18", "13F-HR"),
 ]
+
+EXCLUDED_ACCESSIONS: set[str] = set()  # none excluded currently
 
 
 def fetch(url: str, retries: int = 3) -> bytes:
@@ -124,6 +131,12 @@ def get_filing_xml_url(cik_int: int, accession_raw: str) -> str | None:
 def _fallback_xml_url(base: str, accession_nodash: str) -> str | None:
     """Try common XML info table filenames."""
     candidates = [
+        # SALP (Situational Awareness LP) uses salp13f{q}xml.xml naming
+        "salp13fq1xml.xml",
+        "salp13fq2xml.xml",
+        "salp13fq3xml.xml",
+        "salp13fq4xml.xml",
+        # Common generic names
         "infotable.xml",
         "form13fInfoTable.xml",
         "informationtable.xml",
@@ -172,13 +185,17 @@ def collect_filings_from_submissions(cik_padded: str) -> list[dict]:
     all_13f = []
     for i, form in enumerate(forms):
         if form in ("13F-HR", "13F-HR/A"):
+            acc = accessions[i]
+            if acc in EXCLUDED_ACCESSIONS:
+                print(f"  Skipping excluded: {acc}")
+                continue
             entry = {
                 "form": form,
-                "accession_number": accessions[i],
+                "accession_number": acc,
                 "filed_date": filed_dates[i],
                 "period": periods[i],
             }
-            print(f"  Found 13F: {form} acc={accessions[i]} period={periods[i]}")
+            print(f"  Found 13F: {form} acc={acc} period={periods[i]}")
             all_13f.append(entry)
 
     # Also check paginated older filings
@@ -195,9 +212,12 @@ def collect_filings_from_submissions(cik_padded: str) -> list[dict]:
             o_periods = older_data.get("reportDate", [])
             for i, form in enumerate(o_forms):
                 if form in ("13F-HR", "13F-HR/A"):
+                    acc = o_accessions[i]
+                    if acc in EXCLUDED_ACCESSIONS:
+                        continue
                     all_13f.append({
                         "form": form,
-                        "accession_number": o_accessions[i],
+                        "accession_number": acc,
                         "filed_date": o_dates[i],
                         "period": o_periods[i],
                     })
@@ -291,7 +311,14 @@ def main():
             traceback.print_exc()
             continue
 
+        # Some filing agents report value in dollars instead of thousands.
+        # Detect by checking if implied total exceeds a plausible threshold.
         total_value = sum(h["value_thousands"] for h in holdings)
+        if total_value * 1000 > 10_000_000_000 and len(holdings) <= 50:
+            print(f"  WARNING: total ${total_value * 1000:,} looks dollar-denominated; rescaling /1000")
+            for h in holdings:
+                h["value_thousands"] = max(1, h["value_thousands"] // 1000)
+            total_value = sum(h["value_thousands"] for h in holdings)
         print(f"  Total value: ${total_value:,}k")
 
         holdings_by_quarter[quarter_key] = holdings

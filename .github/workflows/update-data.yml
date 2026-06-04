@@ -26,9 +26,38 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Diagnose — dump EDGAR submissions JSON
+        run: |
+          python3 - <<'EOF'
+          import urllib.request, json
+
+          url = "https://data.sec.gov/submissions/CIK0002045724.json"
+          req = urllib.request.Request(url, headers={
+              "User-Agent": "situational-awareness-dashboard saransh.mega@gmail.com",
+              "Host": "data.sec.gov",
+          })
+          with urllib.request.urlopen(req, timeout=30) as r:
+              data = json.loads(r.read())
+
+          print("=== Entity ===")
+          print(f"name: {data.get('name')}")
+          print(f"cik: {data.get('cik')}")
+
+          recent = data.get("filings", {}).get("recent", {})
+          forms = recent.get("form", [])
+          accs  = recent.get("accessionNumber", [])
+          dates = recent.get("filingDate", [])
+          perds = recent.get("reportDate", [])
+          print(f"\n=== Recent filings ({len(forms)} total) ===")
+          for i in range(len(forms)):
+              print(f"  {forms[i]:15s}  acc={accs[i]}  filed={dates[i]}  period={perds[i]}")
+
+          files = data.get("filings", {}).get("files", [])
+          print(f"\n=== Older filing pages: {files} ===")
+          EOF
+
       - name: Fetch new 13F filings from SEC EDGAR
         run: python scripts/fetch_filings.py
-        continue-on-error: true
 
       - name: Resolve CUSIP -> ticker symbols via OpenFIGI
         run: python scripts/resolve_tickers.py
@@ -36,7 +65,6 @@ jobs:
 
       - name: Build dashboard JSON data
         run: python scripts/build_data.py
-        continue-on-error: true
 
       - name: Commit updated data (if any changes)
         run: |
@@ -47,7 +75,6 @@ jobs:
             git commit -m "data: 13F update $(date -u +%Y-%m-%d)" &&
             git push
           )
-        continue-on-error: true
 
       - name: Copy site files to docs/
         run: |

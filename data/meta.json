@@ -1,72 +1,7 @@
 {
   "cik": 2045724,
   "entity_name": "Situational Awareness LP",
-  "last_updated": "2026-06-04T01:24:40Z",
-  "latest_quarter": "2024-Q4",
-  "total_filing_count": 1,
-  "chart_series": {
-    "573874104": {
-      "label": "MRVL",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 86802213000,
-          "shares": 0
-        }
-      ]
-    },
-    "92840M102": {
-      "label": "VST",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 59063094000,
-          "shares": 0
-        }
-      ]
-    },
-    "92537N108": {
-      "label": "VRT",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 51709137000,
-          "shares": 0
-        }
-      ]
-    },
-    "87422Q109": {
-      "label": "TLN",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 27979751000,
-          "shares": 0
-        }
-      ]
-    },
-    "21037T109": {
-      "label": "CEG",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 21565644000,
-          "shares": 0
-        }
-      ]
-    },
-    "607828100": {
-      "label": "MOD",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 7693926000,
-          "shares": 0
-        }
-      ]
-    }
-  },
-  "quarters": [
-    "2024-Q4"
-  ]
+  "last_updated": null,
+  "latest_quarter": null,
+  "total_filing_count": 0
 }

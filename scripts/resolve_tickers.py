@@ -15,12 +15,10 @@ DATA_DIR = ROOT / "data"
 
 OPENFIGI_URL = "https://api.openfigi.com/v3/mapping"
 BATCH_SIZE = 100
-# OpenFIGI free tier: 25 requests/min = 1 req per 2.4s
 OPENFIGI_DELAY = 2.5
 
 
 def fetch_figi_batch(cusips: list[str]) -> dict[str, dict]:
-    """Query OpenFIGI for a batch of CUSIPs. Returns {cusip: {ticker, name}}."""
     payload = json.dumps([{"idType": "ID_CUSIP", "idValue": c} for c in cusips]).encode()
     req = urllib.request.Request(
         OPENFIGI_URL,
@@ -66,7 +64,6 @@ def main():
     cusip_map: dict = json.loads(cusip_map_path.read_text())
     holdings_by_quarter: dict = json.loads(holdings_path.read_text())
 
-    # Collect all CUSIPs not yet resolved
     all_cusips = set()
     for quarter, holdings in holdings_by_quarter.items():
         for h in holdings:

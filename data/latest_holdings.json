@@ -1,8 +1,8 @@
 {
   "quarter": "2026-Q1",
-  "generated_at": "2026-06-04T01:49:07Z",
+  "generated_at": "2026-06-04T10:41:48Z",
   "total_value_usd": 13676637000,
-  "num_holdings": 42,
+  "num_holdings": 66,
   "holdings": [
     {
       "cusip": "92189F676",
@@ -859,8 +859,8 @@
       "ticker": "LITE",
       "display_name": "LUMENTUM HOLDINGS INC",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": -478577
     },
@@ -879,8 +879,8 @@
       "ticker": "CIFR",
       "display_name": "CIPHER DIGITAL INC",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": -154523
     },
@@ -899,10 +899,10 @@
       "ticker": "EQT",
       "display_name": "EQT CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
-      "qoq_value_delta": -133047
+      "qoq_value_delta": -37520
     },
     {
       "cusip": "19247G107",
@@ -919,8 +919,8 @@
       "ticker": "COHR",
       "display_name": "COHERENT CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": -88648
     },
@@ -939,8 +939,8 @@
       "ticker": "",
       "display_name": "TOWER SEMICONDUCTOR LTD",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": -84895
     },
@@ -959,8 +959,8 @@
       "ticker": "KRC",
       "display_name": "KILROY REALTY CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": -49616
     },
@@ -979,8 +979,8 @@
       "ticker": "HUT",
       "display_name": "HUT 8 CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": -39517
     },
@@ -999,8 +999,8 @@
       "ticker": "EQT",
       "display_name": "EQT CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": -37520
     },
@@ -1019,8 +1019,8 @@
       "ticker": "LBRT",
       "display_name": "LIBERTY ENERGY INC",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": -10470
     },
@@ -1039,8 +1039,8 @@
       "ticker": "VST",
       "display_name": "VISTRA CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1059,8 +1059,8 @@
       "ticker": "GDX",
       "display_name": "VANECK GOLD MINERS ETF",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1079,8 +1079,8 @@
       "ticker": "GLXY",
       "display_name": "GALAXY DIGITAL INC-A",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1099,8 +1099,8 @@
       "ticker": "CIFR 1.75 05/15/30",
       "display_name": "CIPHER DIGITAL INC",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1119,8 +1119,8 @@
       "ticker": "LITE 0.5 12/15/26",
       "display_name": "LUMENTUM HOLDINGS INC",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1139,8 +1139,8 @@
       "ticker": "BE 2.5 08/15/25",
       "display_name": "BLOOM ENERGY CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1159,8 +1159,8 @@
       "ticker": "WDC 3 11/15/28",
       "display_name": "WESTERN DIGITAL CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1179,8 +1179,8 @@
       "ticker": "BE 2.5 08/15/25",
       "display_name": "BLOOM ENERGY CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1199,8 +1199,8 @@
       "ticker": "",
       "display_name": "SEAGATE TECHNOLOGY HLDNGS PL",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1219,8 +1219,8 @@
       "ticker": "CEG",
       "display_name": "CONSTELLATION ENERGY",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1239,8 +1239,8 @@
       "ticker": "ONTO",
       "display_name": "ONTO INNOVATION INC",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1259,8 +1259,8 @@
       "ticker": "MOD",
       "display_name": "MODINE MANUFACTURING CO",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1279,8 +1279,8 @@
       "ticker": "TLN",
       "display_name": "TALEN ENERGY CORP",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1299,8 +1299,8 @@
       "ticker": "MRVL",
       "display_name": "MARVELL TECHNOLOGY INC",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     },
@@ -1319,8 +1319,8 @@
       "ticker": "VRT",
       "display_name": "VERTIV HOLDINGS CO-A",
       "value_usd": 0,
-      "pct_of_portfolio": 0,
-      "qoq_status": "exited",
+      "pct_of_portfolio": 0.0,
+      "qoq_status": "unchanged",
       "qoq_shares_delta": 0,
       "qoq_value_delta": 0
     }

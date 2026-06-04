@@ -14,7 +14,7 @@ ROOT = Path(__file__).parent.parent
 DATA_DIR = ROOT / "data"
 
 OPENFIGI_URL = "https://api.openfigi.com/v3/mapping"
-BATCH_SIZE = 100
+BATCH_SIZE = 10  # OpenFIGI free tier limit per request
 OPENFIGI_DELAY = 2.5
 
 

@@ -51,11 +51,21 @@ def parse_info_table(xml_bytes: bytes) -> list[dict]:
     holdings = []
     for row in rows:
         def t(tag: str) -> str:
-            # Try namespaced first, then bare
+            """Find a direct or namespaced child tag, return its text."""
             child = row.find(q(tag))
             if child is None and ns_uri:
                 child = row.find(tag)
             return (child.text or "").strip() if child is not None else ""
+
+        def t_nested(*tags: str) -> str:
+            """Find a tag possibly nested one level deep (e.g. shrsOrPrnAmt/sshPrnamt)."""
+            for parent_tag in tags[:-1]:
+                parent = row.find(q(parent_tag)) or (row.find(parent_tag) if ns_uri else None)
+                if parent is not None:
+                    child = parent.find(q(tags[-1])) or (parent.find(tags[-1]) if ns_uri else None)
+                    if child is not None and child.text:
+                        return child.text.strip()
+            return t(tags[-1])
 
         # votingAuthority is a sub-element
         va_el = row.find(q("votingAuthority"))
@@ -75,10 +85,16 @@ def parse_info_table(xml_bytes: bytes) -> list[dict]:
         except ValueError:
             value_thousands = 0
 
+        # shares may be direct (old format) or nested inside shrsOrPrnAmt (new format)
         try:
-            shares = int(t("sshPrnamt").replace(",", "") or "0")
+            shares = int(t_nested("shrsOrPrnAmt", "sshPrnamt").replace(",", "") or "0")
         except ValueError:
             shares = 0
+
+        try:
+            share_type = t_nested("shrsOrPrnAmt", "sshPrnamtType") or t("sshPrnamtType")
+        except Exception:
+            share_type = ""
 
         holdings.append({
             "cusip": t("cusip"),
@@ -86,8 +102,9 @@ def parse_info_table(xml_bytes: bytes) -> list[dict]:
             "title_of_class": t("titleOfClass"),
             "value_thousands": value_thousands,
             "shares": shares,
-            "share_type": t("sshPrnamtType"),
+            "share_type": share_type,
             "investment_discretion": t("investmentDiscretion"),
+            "put_call": t("putCall"),
             "voting_sole": va("Sole"),
             "voting_shared": va("Shared"),
             "voting_none": va("None"),

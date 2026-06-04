@@ -7,6 +7,7 @@ Delta-only: skips filings already present in data/filings.json.
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -90,6 +91,10 @@ def get_filing_xml_url(cik_int: int, accession_raw: str) -> str | None:
         idx = json.loads(data)
     except Exception as e:
         print(f"  Could not fetch filing index for {accession_raw}: {e}")
+        # Try the HTML index to discover filenames dynamically
+        xml_url = _discover_xml_from_html_index(base, accession_raw)
+        if xml_url:
+            return xml_url
         return _fallback_xml_url(base, accession_nodash)
 
     documents = idx.get("documents", [])
@@ -124,8 +129,51 @@ def get_filing_xml_url(cik_int: int, accession_raw: str) -> str | None:
             print(f"  Selected first .xml: {doc['name']}")
             return f"{base}/{doc['name']}"
 
-    print(f"  No XML found in index, trying fallback names...")
+    print(f"  No XML found in index, trying HTML index...")
+    xml_url = _discover_xml_from_html_index(base, accession_raw)
+    if xml_url:
+        return xml_url
     return _fallback_xml_url(base, accession_nodash)
+
+
+def _discover_xml_from_html_index(base: str, accession_raw: str) -> str | None:
+    """Parse the HTML filing index to find the XML info table filename."""
+    html_url = f"{base}/{accession_raw}-index.htm"
+    print(f"  Trying HTML index: {html_url}")
+    time.sleep(REQUEST_DELAY)
+    try:
+        html = fetch(html_url).decode("utf-8", errors="replace")
+    except Exception as e:
+        print(f"  HTML index failed: {e}")
+        return None
+
+    # Find all .xml hrefs in the page
+    xml_links = re.findall(r'href="([^"]*\.xml)"', html, re.IGNORECASE)
+    print(f"  HTML index XML links: {xml_links}")
+
+    cover_types_lower = {"13f-hr", "13f-hr/a", "13f-nt"}
+    # Also find the type labels next to each link to skip the cover doc
+    rows = re.findall(
+        r'href="([^"]*.xml)"[^<]*</a>.*?<td[^>]*>([^<]+)</td>',
+        html, re.IGNORECASE | re.DOTALL
+    )
+
+    for href, doc_type in rows:
+        fname = href.split("/")[-1]
+        if doc_type.strip().lower() not in cover_types_lower:
+            url = f"{base}/{fname}"
+            print(f"  HTML index selected: {fname} (type={doc_type.strip()})")
+            return url
+
+    # Fallback: just pick the first .xml that isn't the primary doc
+    for href in xml_links:
+        fname = href.split("/")[-1].lower()
+        if "primary" not in fname and fname.endswith(".xml"):
+            url = f"{base}/{href.split('/')[-1]}"
+            print(f"  HTML index fallback: {fname}")
+            return url
+
+    return None
 
 
 def _fallback_xml_url(base: str, accession_nodash: str) -> str | None:

@@ -598,74 +598,99 @@
     ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
     /* ── RESPONSIVE ── */
+
+    /* Prevent any element causing horizontal page scroll */
+    html, body { overflow-x: hidden; }
+
+    /* Grid/flex children can shrink below content size */
+    * { min-width: 0; }
+
     @media (max-width: 1100px) {
       .chart-row { grid-template-columns: 1fr; }
       .two-col   { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 700px) {
-      /* Nav */
-      #navbar { padding: 0 14px; height: 52px; gap: 8px; }
+      /* ── NAV ── */
+      #navbar { padding: 0 12px; height: 50px; gap: 6px; }
+      .nav-left { gap: 8px; overflow: hidden; flex-shrink: 1; min-width: 0; }
+      .logomark { width: 28px; height: 28px; font-size: 12px; flex-shrink: 0; }
+      .wordmark { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
       .wordmark span { display: none; }
-      .wordmark { font-size: 12px; }
-      .logomark { width: 28px; height: 28px; font-size: 12px; }
-      #quarter-btn { font-size: 12px; padding: 5px 10px; gap: 6px; }
-      #nav-updated { display: none; }
-      .pulse-dot { display: none; }
+      #quarter-btn { font-size: 12px; padding: 5px 10px; gap: 5px; white-space: nowrap; }
+      .nav-right { display: none; }
 
-      /* Main spacing */
+      /* ── MAIN ── */
       main { padding: 16px 12px 60px; }
-      section { margin-bottom: 32px; }
+      section { margin-bottom: 28px; }
       .section-title { font-size: 16px; }
+      .section-sub { font-size: 12px; }
+      .section-header { margin-bottom: 12px; }
 
-      /* Chart row: single column, shorter height */
+      /* ── CHART PANELS ── */
       .chart-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px; }
-      .chart-panel { padding: 14px 14px 10px; }
+      .chart-panel { padding: 12px 12px 8px; overflow: hidden; }
       .chart-panel-title { font-size: 11px; }
+      .chart-panel-sub { font-size: 10px; margin-bottom: 8px; }
 
-      /* Stat cards: 2-up */
-      .stat-strip, .snapshot-stats {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-      }
-      .stat-card { padding: 12px 14px; }
-      .stat-value { font-size: 18px; }
+      /* ── STAT CARDS ── */
+      .stat-strip, .snapshot-stats { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+      .stat-card { padding: 12px 12px; }
+      .stat-value { font-size: 17px; }
+      .stat-meta { font-size: 10px; }
 
-      /* Table: allow horizontal scroll */
-      .holdings-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      table { min-width: 480px; }
-      .table-controls { gap: 8px; }
-      .search-box { font-size: 13px; }
+      /* ── PANELS ── */
+      .panel { padding: 12px; }
+      .panel-title { font-size: 10px; margin-bottom: 10px; }
 
-      /* Two-col → single col, tighter gap */
-      .two-col { gap: 12px; }
+      /* ── TABLE ── */
+      .table-controls { flex-direction: column; gap: 8px; margin-bottom: 10px; }
+      .search-box { width: 100%; min-width: 0; font-size: 13px; padding: 8px 12px; }
+      .seg-filter { width: 100%; justify-content: space-between; }
+      .seg-btn { flex: 1; text-align: center; padding: 6px 4px; font-size: 11px; min-height: 34px; }
+      .holdings-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+      table { min-width: 420px; font-size: 12px; }
+      tbody td { padding: 8px 8px; }
+      thead th { padding: 6px 8px; }
+      .company-cell { max-width: 100px; }
 
-      /* Donut: stack vertically */
-      .donut-wrap { flex-direction: column; align-items: flex-start; gap: 12px; }
+      /* ── RIGHT COL ── */
+      .two-col { gap: 10px; }
+      .right-col { gap: 10px; }
 
-      /* Filing timeline */
-      .timeline-row { padding: 10px 12px; gap: 3px 10px; }
-      .timeline-quarter { font-size: 13px; }
+      /* ── DONUT ── */
+      .donut-wrap { flex-direction: row; align-items: center; gap: 14px; }
+      .donut-svg-wrap svg { width: 120px !important; height: 120px !important; }
 
-      /* Drawer: full screen */
+      /* ── MOVERS ── */
+      .mover-row { padding: 6px 8px; }
+      .mover-ticker { width: 38px; font-size: 11px; }
+      .mover-name { font-size: 11px; }
+      .mover-delta { font-size: 11px; }
+
+      /* ── FILING TIMELINE ── */
+      .timeline-row { padding: 10px 12px; gap: 3px 8px; }
+      .timeline-quarter { font-size: 12px; }
+      .latest-chip { font-size: 8px; padding: 1px 5px; margin-left: 5px; }
+
+      /* ── DRAWER ── */
       #drawer { width: 100vw; right: -100vw; }
-      .drawer-header { padding: 18px 16px 12px; }
-      .drawer-body { padding: 16px; }
-      .drawer-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .drawer-header { padding: 16px 14px 12px; }
+      .drawer-company { font-size: 16px; }
+      .drawer-body { padding: 14px; }
+      .drawer-stats { gap: 8px; }
+      .drawer-stat { padding: 10px 12px; }
+      .drawer-stat-value { font-size: 14px; }
 
-      /* Panel padding */
-      .panel { padding: 14px; }
-
-      /* Section header */
-      .section-header { margin-bottom: 14px; }
+      /* ── FOOTER ── */
+      footer { padding: 16px 12px; font-size: 11px; }
     }
 
-    /* Very small screens */
-    @media (max-width: 380px) {
-      .stat-strip, .snapshot-stats { grid-template-columns: 1fr 1fr; }
-      .stat-value { font-size: 15px; }
-      #quarter-btn { padding: 4px 8px; font-size: 11px; }
+    /* Very small screens (≤ 390px) */
+    @media (max-width: 390px) {
       .wordmark { display: none; }
+      .stat-value { font-size: 15px; }
+      table { min-width: 380px; }
     }
   </style>
 </head>

@@ -218,7 +218,6 @@ function renderExposureChart() {
     ql.textContent=fmt.quarter(d.q); svg.append(ql);
   });
 
-  // legend
   [{color:'rgba(63,185,80,0.7)',label:'Long'},{color:'rgba(248,81,73,0.7)',label:'Put/Short'}].forEach((item,i) => {
     const lx = pL+i*80;
     svg.append(svgEl('rect',{x:lx,y:H+17,width:10,height:7,rx:'2',fill:item.color}));
@@ -307,7 +306,7 @@ function renderSnapshotStats(q) {
   const valueDelta = prevV>0 ? (totalV-prevV)/prevV*100 : null;
 
   document.getElementById('snapshot-stats').innerHTML = [
-    {label:'Total Portfolio Value', value:fmt.usd(totalV), meta: valueDelta!==null ? `<span style="color:${valueDelta>=0?'var(--green)':'var(--red)'}">` + (valueDelta>=0?'▲':'▼') + ` ${Math.abs(valueDelta).toFixed(1)}% QoQ</span>` : '13F Reportable'},
+    {label:'Total Portfolio Value', value:fmt.usd(totalV), meta: valueDelta!==null ? `<span style="color:${valueDelta>=0?'var(--green)':'var(--red)'}">${valueDelta>=0?'▲':'▼'} ${Math.abs(valueDelta).toFixed(1)}% QoQ</span>` : '13F Reportable'},
     {label:'Active Holdings',       value:active.length,   meta:'Positions reported'},
     {label:'New This Quarter',      value:newCount,        meta:'<span style="color:var(--green)">▲ Added</span>'},
     {label:'Exited This Quarter',   value:exitedCount,     meta:'<span style="color:var(--red)">▼ Closed</span>'},
@@ -527,3 +526,5 @@ async function init() {
   renderFilingTimeline();
   wireFilters();
 }
+
+document.addEventListener('DOMContentLoaded', init);

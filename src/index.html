@@ -142,6 +142,7 @@
       left: 50%;
       transform: translateX(-50%);
       min-width: 200px;
+      max-width: calc(100vw - 24px);
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -601,11 +602,70 @@
       .chart-row { grid-template-columns: 1fr; }
       .two-col   { grid-template-columns: 1fr; }
     }
+
     @media (max-width: 700px) {
-      .stat-strip, .snapshot-stats { grid-template-columns: repeat(2, 1fr); }
-      .timeline-row { grid-template-columns: 1fr 1fr; row-gap: 4px; }
-      #drawer { width: 100vw; right: -100vw; }
+      /* Nav */
+      #navbar { padding: 0 14px; height: 52px; gap: 8px; }
       .wordmark span { display: none; }
+      .wordmark { font-size: 12px; }
+      .logomark { width: 28px; height: 28px; font-size: 12px; }
+      #quarter-btn { font-size: 12px; padding: 5px 10px; gap: 6px; }
+      #nav-updated { display: none; }
+      .pulse-dot { display: none; }
+
+      /* Main spacing */
+      main { padding: 16px 12px 60px; }
+      section { margin-bottom: 32px; }
+      .section-title { font-size: 16px; }
+
+      /* Chart row: single column, shorter height */
+      .chart-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px; }
+      .chart-panel { padding: 14px 14px 10px; }
+      .chart-panel-title { font-size: 11px; }
+
+      /* Stat cards: 2-up */
+      .stat-strip, .snapshot-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .stat-card { padding: 12px 14px; }
+      .stat-value { font-size: 18px; }
+
+      /* Table: allow horizontal scroll */
+      .holdings-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      table { min-width: 480px; }
+      .table-controls { gap: 8px; }
+      .search-box { font-size: 13px; }
+
+      /* Two-col → single col, tighter gap */
+      .two-col { gap: 12px; }
+
+      /* Donut: stack vertically */
+      .donut-wrap { flex-direction: column; align-items: flex-start; gap: 12px; }
+
+      /* Filing timeline */
+      .timeline-row { padding: 10px 12px; gap: 3px 10px; }
+      .timeline-quarter { font-size: 13px; }
+
+      /* Drawer: full screen */
+      #drawer { width: 100vw; right: -100vw; }
+      .drawer-header { padding: 18px 16px 12px; }
+      .drawer-body { padding: 16px; }
+      .drawer-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+      /* Panel padding */
+      .panel { padding: 14px; }
+
+      /* Section header */
+      .section-header { margin-bottom: 14px; }
+    }
+
+    /* Very small screens */
+    @media (max-width: 380px) {
+      .stat-strip, .snapshot-stats { grid-template-columns: 1fr 1fr; }
+      .stat-value { font-size: 15px; }
+      #quarter-btn { padding: 4px 8px; font-size: 11px; }
+      .wordmark { display: none; }
     }
   </style>
 </head>

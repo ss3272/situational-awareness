@@ -1,155 +1,409 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Situational Awareness LP — SEC 13F Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Situational Awareness LP — 13F Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1c2230;
+    --border: #30363d;
+    --accent: #6e40c9;
+    --accent-soft: rgba(110,64,201,0.14);
+    --gold: #f4c542;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #e3934d;
+    --blue: #58a6ff;
+    --muted: #8b949e;
+    --text: #e6edf3;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --head: 'Space Grotesk', 'Inter', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--body); -webkit-font-smoothing: antialiased; }
+  body { display: flex; justify-content: center; padding: 0 0 56px; }
+  .app { width: 100%; max-width: 1440px; min-height: 100vh; }
+  .mono { font-family: var(--mono); font-feature-settings: 'tnum' 1; }
+  .green { color: var(--green); } .red { color: var(--red); } .gold { color: var(--gold); } .muted { color: var(--muted); }
+
+  /* NAV */
+  .nav {
+    display: flex; align-items: center; gap: 24px;
+    height: 64px; padding: 0 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .logomark {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: linear-gradient(140deg,#8957e5,#6e40c9);
+    display: grid; place-items: center;
+    font-family: var(--head); font-weight: 700; font-size: 14px; color: #fff;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 4px 14px rgba(110,64,201,0.4);
+  }
+  .wordmark { font-family: var(--head); font-weight: 600; font-size: 16px; letter-spacing: -0.2px; white-space: nowrap; }
+  .wordmark span { color: var(--muted); font-weight: 500; }
+  .qtabs { display: flex; align-items: center; gap: 6px; overflow-x: auto; }
+  .qtab {
+    font-family: var(--mono); font-size: 12px; font-weight: 500;
+    color: var(--muted); padding: 7px 14px; border-radius: 7px;
+    border: 1px solid transparent; cursor: pointer;
+    transition: all 0.15s ease; background: none; white-space: nowrap;
+  }
+  .qtab:hover { color: var(--text); background: var(--surface); }
+  .qtab.active { color: #fff; background: var(--accent-soft); border-color: rgba(110,64,201,0.55); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .updated { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .pulse {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 0 0 rgba(63,185,80,0.7); animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(63,185,80,0.55); }
+    70%  { box-shadow: 0 0 0 7px rgba(63,185,80,0); }
+    100% { box-shadow: 0 0 0 0 rgba(63,185,80,0); }
+  }
+
+  /* LAYOUT */
+  .wrap { padding: 24px 32px; display: flex; flex-direction: column; gap: 22px; }
+
+  /* STAT CARDS */
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; position: relative; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 6px 18px rgba(0,0,0,0.18);
+  }
+  .card .klabel { font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .card .kbig { font-family: var(--mono); font-weight: 700; font-size: 28px; letter-spacing: -1px; margin-top: 10px; line-height: 1; }
+  .card .kbig.name { font-size: 20px; letter-spacing: -0.5px; }
+  .card .ksub { font-size: 12px; color: var(--muted); margin-top: 8px; font-family: var(--mono); }
+  .card .kdelta {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono); font-weight: 600; font-size: 12px;
+    margin-top: 10px; padding: 4px 9px; border-radius: 6px; white-space: nowrap;
+  }
+  .kdelta.up   { color: var(--green);  background: rgba(63,185,80,0.12); }
+  .kdelta.down { color: var(--red);    background: rgba(248,81,73,0.12); }
+  .kdelta.warn { color: var(--orange); background: rgba(227,147,77,0.12); }
+  .card .icon-pill {
+    position: absolute; top: 16px; right: 16px;
+    width: 30px; height: 30px; border-radius: 8px;
+    display: grid; place-items: center; background: rgba(248,81,73,0.12); color: var(--red);
+  }
+  .spark { margin-top: 12px; height: 34px; width: 100%; display: block; }
+
+  /* MAIN ROW */
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .col-left { display: flex; flex-direction: column; }
+  .col-right { display: flex; flex-direction: column; gap: 18px; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 6px 18px rgba(0,0,0,0.18); overflow: hidden;
+  }
+  .panel-head {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .section-title { font-family: var(--head); font-weight: 600; font-size: 14px; white-space: nowrap; }
+  .tag {
+    font-family: var(--mono); font-size: 10px; color: var(--muted); font-weight: 500;
+    padding: 2px 7px; border: 1px solid var(--border); border-radius: 5px; letter-spacing: 0.3px;
+  }
+
+  /* FILTER BAR */
+  .filterbar { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--border); }
+  .search {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 11px; color: var(--muted); font-size: 13px;
+  }
+  .search input { background: none; border: none; outline: none; color: var(--text); font-family: var(--body); font-size: 13px; width: 100%; }
+  .search input::placeholder { color: var(--muted); }
+  .seg { display: flex; gap: 3px; background: var(--bg); padding: 3px; border: 1px solid var(--border); border-radius: 8px; }
+  .seg button {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--muted); background: none; border: none; cursor: pointer;
+    padding: 5px 10px; border-radius: 5px; transition: all 0.13s ease;
+  }
+  .seg button:hover { color: var(--text); }
+  .seg button.active { background: var(--accent-soft); color: #fff; box-shadow: inset 0 0 0 1px rgba(110,64,201,0.4); }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 600;
+    padding: 10px 18px; border-bottom: 1px solid var(--border);
+    background: var(--surface); position: sticky; top: 64px;
+  }
+  th.num, td.num { text-align: right; }
+  tbody tr { transition: background 0.12s ease; cursor: pointer; }
+  tbody tr:nth-child(odd) { background: rgba(13,17,23,0.5); }
+  tbody tr:hover { background: var(--accent-soft); }
+  tbody td { padding: 12px 18px; font-size: 13px; border-bottom: 1px solid rgba(48,54,61,0.5); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  .tk { font-family: var(--mono); font-weight: 700; font-size: 13px; }
+  .co { color: var(--muted); font-size: 12px; }
+  td.num { font-family: var(--mono); font-weight: 500; }
+
+  .type-pill {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    padding: 3px 7px; border-radius: 4px; letter-spacing: 0.4px; display: inline-block;
+  }
+  .type-long { color: var(--green); background: rgba(63,185,80,0.12); border: 1px solid rgba(63,185,80,0.25); }
+  .type-put  { color: var(--red);   background: rgba(248,81,73,0.12); border: 1px solid rgba(248,81,73,0.25); }
+  .type-call { color: var(--blue);  background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.25); }
+
+  .qoq { font-family: var(--mono); font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
+  .new-badge {
+    font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: #fff;
+    background: linear-gradient(135deg,#8957e5,#6e40c9);
+    padding: 2px 8px; border-radius: 999px;
+    box-shadow: 0 0 0 1px rgba(137,87,229,0.4), 0 2px 8px rgba(110,64,201,0.4);
+    display: inline-flex; align-items: center;
+  }
+  .exited-row { opacity: 0.45; }
+  .exited-badge {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    color: var(--muted); background: rgba(139,148,158,0.12);
+    border: 1px solid var(--border); padding: 2px 7px; border-radius: 4px;
+  }
+  .portbar { display: inline-block; width: 60px; height: 4px; border-radius: 2px; background: rgba(110,64,201,0.2); vertical-align: middle; margin-left: 6px; }
+  .portbar-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
+  /* DONUT */
+  .chart-body { padding: 18px; }
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .legend-row { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .legend-label { color: var(--text); flex: 1; }
+  .legend-pct { font-family: var(--mono); font-weight: 600; color: var(--muted); }
+  .donut-center-val { font-family: var(--mono); font-weight: 700; font-size: 20px; fill: var(--text); }
+  .donut-center-lab { font-family: var(--body); font-size: 9px; fill: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
+
+  /* TIMELINE */
+  .timeline { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; }
+  .tl-row {
+    display: grid; grid-template-columns: 90px 170px 1fr 1fr auto;
+    align-items: center; gap: 16px;
+    background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--border);
+    border-radius: 9px; padding: 14px 18px; transition: all 0.15s ease;
+  }
+  .tl-row:hover { border-color: var(--accent); background: var(--surface-2); }
+  .tl-row.latest { border-left-color: var(--accent); background: linear-gradient(90deg, var(--accent-soft), transparent 40%); }
+  .tl-q { font-family: var(--mono); font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .tl-meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .tl-meta b { color: var(--text); font-weight: 600; }
+  .latest-chip { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 2px 7px; border-radius: 5px; letter-spacing: 0.4px; }
+  .edgar {
+    font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--blue);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 11px; border: 1px solid var(--border); border-radius: 7px;
+    transition: all 0.13s ease; white-space: nowrap;
+  }
+  .edgar:hover { border-color: var(--blue); background: rgba(88,166,255,0.08); }
+
+  /* EMPTY STATE */
+  .empty-msg { padding: 48px; text-align: center; color: var(--muted); font-family: var(--mono); font-size: 13px; }
+
+  /* DETAIL DRAWER */
+  .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 30; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .drawer-overlay.open { opacity: 1; pointer-events: all; }
+  .detail-drawer {
+    position: fixed; right: 0; top: 0; bottom: 0; width: 380px; z-index: 40;
+    background: var(--surface); border-left: 1px solid var(--border);
+    padding: 24px; overflow-y: auto; transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .detail-drawer.open { transform: translateX(0); }
+  .drawer-close { position: absolute; top: 16px; right: 16px; background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 14px; }
+  .drawer-close:hover { color: var(--text); border-color: var(--text); }
+  #drawer-title { font-family: var(--head); font-size: 20px; font-weight: 700; margin-top: 8px; }
+  .drawer-cusip { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .drawer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+  .drawer-stat { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .drawer-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .drawer-stat-value { font-family: var(--mono); font-weight: 600; font-size: 16px; margin-top: 6px; }
+  .drawer-chart-wrap { height: 120px; margin: 16px 0; }
+  #drawer-title { margin-bottom: 0; }
+
+  /* FOOTER */
+  .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 32px; margin-top: 8px;
+    border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--muted); font-family: var(--mono);
+  }
+  .footer a { color: var(--blue); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  svg { display: block; }
+
+  @media (max-width: 1100px) {
+    .row2 { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2,1fr); }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 16px; }
+    .stats { grid-template-columns: 1fr; }
+    .tl-row { grid-template-columns: 1fr; gap: 8px; }
+    .nav { padding: 0 16px; gap: 12px; }
+    .wordmark span { display: none; }
+  }
+</style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="header-title">
-        <div class="fund-badge">SEC EDGAR · 13F</div>
-        <h1>Situational Awareness LP</h1>
-        <p class="manager-name">Leopold Aschenbrenner · Institutional Holdings Dashboard</p>
+<div class="app">
+
+  <nav class="nav">
+    <div class="brand">
+      <div class="logomark">SA</div>
+      <div class="wordmark">Situational Awareness LP <span>· 13F Tracker</span></div>
+    </div>
+    <div class="qtabs" id="qtabs"></div>
+    <div class="nav-right">
+      <span class="updated" id="nav-updated">Loading…</span>
+      <span class="pulse"></span>
+    </div>
+  </nav>
+
+  <div class="wrap">
+
+    <div class="stats" id="stats-row">
+      <div class="card">
+        <div class="klabel">Total Portfolio Value</div>
+        <div class="kbig" id="s-value">—</div>
+        <div class="ksub">13F Reportable Securities</div>
+        <div class="kdelta" id="s-value-delta" style="display:none"></div>
       </div>
-      <div class="header-meta" id="header-meta">
-        <span class="last-updated" id="last-updated">Loading…</span>
-        <span class="latest-quarter" id="latest-quarter"></span>
+      <div class="card">
+        <div class="klabel">Total Holdings</div>
+        <div class="kbig" id="s-count">—</div>
+        <div class="ksub" id="s-count-sub">Positions</div>
+        <div class="kdelta" id="s-count-delta" style="display:none"></div>
+      </div>
+      <div class="card">
+        <div class="klabel">Largest Long Position</div>
+        <div class="kbig name" id="s-largest">—</div>
+        <div class="ksub" id="s-largest-sub">—</div>
+        <svg class="spark" id="spark" viewBox="0 0 220 34" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="card alarm">
+        <div class="icon-pill">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="klabel">Short / Put Exposure</div>
+        <div class="kbig" id="s-put">—</div>
+        <div class="ksub">Put Options Notional</div>
+        <div class="kdelta" id="s-put-pct" style="display:none"></div>
       </div>
     </div>
-  </header>
 
-  <main class="container">
-    <section class="stats-row" id="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Total Portfolio Value</div>
-        <div class="stat-value" id="stat-total-value">—</div>
-        <div class="stat-sub" id="stat-quarter">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Number of Holdings</div>
-        <div class="stat-value" id="stat-holdings">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Largest Position</div>
-        <div class="stat-value" id="stat-largest">—</div>
-        <div class="stat-sub" id="stat-largest-pct">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Filings</div>
-        <div class="stat-value" id="stat-filings">—</div>
-        <div class="stat-sub">13F-HR filings on record</div>
-      </div>
-    </section>
-
-    <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="holdings">Holdings Table</button>
-      <button class="tab-btn" data-tab="charts">Historical Charts</button>
-      <button class="tab-btn" data-tab="composition">Composition</button>
-      <button class="tab-btn" data-tab="filings">Filing History</button>
-    </nav>
-
-    <section class="tab-panel active" id="tab-holdings">
-      <div class="table-toolbar">
-        <input type="text" id="search-input" placeholder="Filter by ticker or company…" />
-        <select id="quarter-select">
-          <option value="">Latest Quarter</option>
-        </select>
-        <label class="toggle-label">
-          <input type="checkbox" id="show-exited" />
-          Show exited positions
-        </label>
-      </div>
-      <div class="table-wrap">
-        <table id="holdings-table">
-          <thead>
-            <tr>
-              <th data-col="ticker" class="sortable">Ticker <span class="sort-arrow">↕</span></th>
-              <th data-col="display_name" class="sortable">Company <span class="sort-arrow">↕</span></th>
-              <th data-col="shares" class="sortable num">Shares <span class="sort-arrow">↕</span></th>
-              <th data-col="value_usd" class="sortable num">Market Value <span class="sort-arrow">↕</span></th>
-              <th data-col="pct_of_portfolio" class="sortable num">% Portfolio <span class="sort-arrow">↕</span></th>
-              <th data-col="qoq_shares_delta" class="sortable num">QoQ Shares Δ <span class="sort-arrow">↕</span></th>
-              <th data-col="qoq_value_delta" class="sortable num">QoQ Value Δ <span class="sort-arrow">↕</span></th>
-            </tr>
-          </thead>
-          <tbody id="holdings-body"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="tab-panel" id="tab-charts">
-      <div class="chart-header">
-        <h2>Top Holdings Over Time</h2>
-        <p class="chart-sub">Dollar value of top 10 positions across all quarters</p>
-      </div>
-      <div class="chart-container">
-        <canvas id="history-chart"></canvas>
-      </div>
-    </section>
-
-    <section class="tab-panel" id="tab-composition">
-      <div class="composition-grid">
-        <div class="chart-half">
-          <h2>Portfolio Composition</h2>
-          <p class="chart-sub">Latest quarter — by market value</p>
-          <div class="donut-wrap">
-            <canvas id="donut-chart"></canvas>
+    <div class="row2">
+      <div class="col-left">
+        <div class="panel" style="display:flex;flex-direction:column;">
+          <div class="panel-head">
+            <div class="section-title">Portfolio Holdings <span class="tag" id="holdings-qtag">—</span></div>
+          </div>
+          <div class="filterbar">
+            <div class="search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="search-input" placeholder="Search ticker or company…" />
+            </div>
+            <div class="seg" id="type-seg">
+              <button class="active" data-f="all">All</button>
+              <button data-f="long">Longs</button>
+              <button data-f="put">Puts</button>
+              <button data-f="call">Calls</button>
+            </div>
+          </div>
+          <div style="overflow:auto;">
+            <table id="holdings-table">
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Company</th>
+                  <th>Type</th>
+                  <th class="num">Size</th>
+                  <th class="num">Mkt Value</th>
+                  <th class="num">% Port.</th>
+                  <th class="num">QoQ</th>
+                </tr>
+              </thead>
+              <tbody id="holdings-body"></tbody>
+            </table>
           </div>
         </div>
-        <div class="chart-half">
-          <h2>Top 10 Holdings</h2>
-          <div id="composition-legend" class="legend-list"></div>
+      </div>
+
+      <div class="col-right">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="section-title">Portfolio Breakdown</div>
+            <span class="tag">by exposure</span>
+          </div>
+          <div class="chart-body">
+            <div class="donut-wrap">
+              <svg id="donut" width="150" height="150" viewBox="0 0 150 150" style="flex-shrink:0"></svg>
+              <div class="legend" id="donut-legend"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="section-title">Reported 13F Value by Quarter</div>
+            <span class="tag">USD billions</span>
+          </div>
+          <div class="chart-body">
+            <svg id="barchart" width="100%" viewBox="0 0 560 200" preserveAspectRatio="xMidYMid meet" style="display:block;"></svg>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="tab-panel" id="tab-filings">
-      <h2>13F Filing History</h2>
-      <div class="table-wrap">
-        <table id="filings-table">
-          <thead>
-            <tr>
-              <th>Quarter</th>
-              <th>Filed Date</th>
-              <th>Form Type</th>
-              <th class="num"># Holdings</th>
-              <th class="num">Total Value</th>
-              <th>EDGAR Link</th>
-            </tr>
-          </thead>
-          <tbody id="filings-body"></tbody>
-        </table>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="section-title">SEC Filing History</div>
+        <span class="tag">Form 13F-HR</span>
       </div>
-    </section>
-  </main>
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span>Data sourced from <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0002045724&type=13F" target="_blank" rel="noopener">SEC EDGAR</a> · CIK 0002045724 · Leopold Aschenbrenner</span>
+    <span>13F filings are quarterly snapshots. Not investment advice.</span>
+  </div>
 
   <div class="drawer-overlay" id="drawer-overlay"></div>
   <aside class="detail-drawer" id="detail-drawer">
     <button class="drawer-close" id="drawer-close">✕</button>
-    <h2 id="drawer-title">—</h2>
-    <p id="drawer-cusip" class="drawer-cusip"></p>
-    <div class="drawer-stats" id="drawer-stats"></div>
-    <div class="drawer-chart-wrap">
-      <canvas id="sparkline-chart"></canvas>
+    <div style="margin-top:8px">
+      <div id="drawer-title" style="font-family:var(--head);font-size:20px;font-weight:700">—</div>
+      <div id="drawer-cusip" class="drawer-cusip"></div>
     </div>
-    <table id="drawer-history-table">
-      <thead>
-        <tr><th>Quarter</th><th class="num">Shares</th><th class="num">Value (USD)</th><th class="num">% Portfolio</th></tr>
-      </thead>
-      <tbody id="drawer-history-body"></tbody>
+    <div class="drawer-stats" id="drawer-stats"></div>
+    <div class="drawer-chart-wrap"><svg id="drawer-spark" width="100%" height="120" viewBox="0 0 332 120"></svg></div>
+    <table id="drawer-table" style="margin-top:8px">
+      <thead><tr><th>Quarter</th><th class="num">Shares</th><th class="num">Value</th><th class="num">% Port.</th></tr></thead>
+      <tbody id="drawer-body"></tbody>
     </table>
   </aside>
 
-  <footer class="site-footer">
-    <p>Data sourced from <a href="https://www.sec.gov/cgi-bin/browse-edgar" target="_blank" rel="noopener">SEC EDGAR</a> ·
-       13F-HR filings · Auto-updated daily via GitHub Actions ·
-       <a href="https://github.com/ss3272/rbm-emulator" target="_blank" rel="noopener">View source</a></p>
-  </footer>
-
-  <script src="app.js"></script>
+</div>
+<script src="app.js"></script>
 </body>
 </html>

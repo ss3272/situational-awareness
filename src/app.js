@@ -1,349 +1,493 @@
 'use strict';
 
-const BASE = window.location.pathname.includes('/rbm-emulator')
-  ? '/rbm-emulator'
-  : '.';
+const BASE = window.location.pathname.includes('/rbm-emulator') ? '/rbm-emulator' : '.';
+const NS = 'http://www.w3.org/2000/svg';
 
-async function loadJSON(path) {
-  const resp = await fetch(`${BASE}/data/${path}`);
-  if (!resp.ok) throw new Error(`Failed to load ${path}: ${resp.status}`);
-  return resp.json();
+async function loadJSON(p) {
+  const r = await fetch(`${BASE}/data/${p}`);
+  if (!r.ok) throw new Error(`${p}: ${r.status}`);
+  return r.json();
 }
-
-const PALETTE = [
-  '#6e40c9', '#9f7aea', '#4299e1', '#48bb78', '#f4c542',
-  '#ed8936', '#fc8181', '#76e4f7', '#b794f4', '#68d391',
-];
 
 const fmt = {
   usd(v) {
-    if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
-    if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
-    if (v >= 1e3) return `$${(v / 1e3).toFixed(0)}K`;
+    if (v >= 1e12) return `$${(v/1e12).toFixed(2)}T`;
+    if (v >= 1e9)  return `$${(v/1e9).toFixed(2)}B`;
+    if (v >= 1e6)  return `$${(v/1e6).toFixed(1)}M`;
+    if (v >= 1e3)  return `$${(v/1e3).toFixed(0)}K`;
     return `$${v.toLocaleString()}`;
   },
-  num(v) {
-    if (Math.abs(v) >= 1e6) return `${(v / 1e6).toFixed(2)}M`;
+  usdB(v) { return `$${(v/1e9).toFixed(2)}B`; },
+  shares(v) {
+    if (!v) return '—';
+    if (Math.abs(v) >= 1e6) return `${(v/1e6).toFixed(1)}M sh`;
+    if (Math.abs(v) >= 1e3) return `${(v/1e3).toFixed(0)}K sh`;
     return v.toLocaleString();
   },
   pct(v) { return `${v.toFixed(2)}%`; },
-  delta(v, isShares = false) {
-    if (v === 0) return { text: '—', cls: 'delta-neutral' };
-    const sign = v > 0 ? '+' : '';
-    const text = isShares ? `${sign}${fmt.num(v)}` : `${sign}${fmt.usd(v * 1000)}`;
-    return { text, cls: v > 0 ? 'delta-positive' : 'delta-negative' };
-  },
 };
 
-let state = {
-  meta: null,
-  latestHoldings: null,
-  holdingsByQuarter: null,
-  filings: null,
-  activeQuarter: null,
-  sortCol: 'value_usd',
-  sortDir: 'desc',
-  filter: '',
-  showExited: false,
-  historyChart: null,
-  donutChart: null,
-  sparklineChart: null,
+function holdingType(h) {
+  const pc = (h.put_call || '').toLowerCase();
+  if (pc === 'put')  return 'put';
+  if (pc === 'call') return 'call';
+  return 'long';
+}
+
+let S = {
+  meta: null, latestHoldings: null, holdingsByQuarter: null, filings: null,
+  quarter: null, typeFilter: 'all', searchQ: '',
 };
 
 async function boot() {
   try {
-    [state.meta, state.latestHoldings, state.holdingsByQuarter, state.filings] = await Promise.all([
-      loadJSON('meta.json'),
-      loadJSON('latest_holdings.json'),
-      loadJSON('holdings_by_quarter.json'),
-      loadJSON('filings.json'),
+    [S.meta, S.latestHoldings, S.holdingsByQuarter, S.filings] = await Promise.all([
+      loadJSON('meta.json'), loadJSON('latest_holdings.json'),
+      loadJSON('holdings_by_quarter.json'), loadJSON('filings.json'),
     ]);
-  } catch (e) {
-    showEmptyState(e.message);
+  } catch(e) {
+    document.getElementById('holdings-body').innerHTML =
+      `<tr><td colspan="7" class="empty-msg">No data yet — ${e.message}</td></tr>`;
     return;
   }
 
-  state.activeQuarter = state.meta.latest_quarter;
-  renderHeader();
+  S.quarter = S.meta.latest_quarter;
+
+  const upd = S.meta.last_updated
+    ? new Date(S.meta.last_updated).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})
+    : 'Never';
+  document.getElementById('nav-updated').textContent = `Last updated: ${upd}`;
+
+  buildQuarterTabs();
   renderStats();
-  renderQuarterSelect();
-  renderHoldingsTable();
-  renderHistoryChart();
-  renderDonutChart();
-  renderFilingsTable();
+  renderHoldings();
+  renderDonut();
+  renderBarChart();
+  renderTimeline();
   bindEvents();
 }
 
-function showEmptyState(msg) {
-  document.getElementById('holdings-body').innerHTML = `
-    <tr><td colspan="7" class="empty-state">
-      <h3>No data available yet</h3>
-      <p>${msg || 'Run <code>scripts/fetch_filings.py</code> to populate the dashboard.'}</p>
-    </td></tr>`;
+function buildQuarterTabs() {
+  const quarters = Object.keys(S.holdingsByQuarter)
+    .filter(q => /^\d{4}-Q\d$/.test(q))
+    .sort((a,b) => a.localeCompare(b));
+
+  const container = document.getElementById('qtabs');
+  container.innerHTML = '';
+  quarters.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'qtab' + (q === S.quarter ? ' active' : '');
+    btn.textContent = q.replace('-Q', ' Q').replace(/(\d{4}) Q(\d)/, (_, y, n) => `Q${n} ${y}`);
+    btn.dataset.q = q;
+    btn.addEventListener('click', () => switchQuarter(q));
+    container.appendChild(btn);
+  });
 }
 
-function renderHeader() {
-  const { meta } = state;
-  const updated = meta.last_updated
-    ? new Date(meta.last_updated).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    : 'Never';
-  document.getElementById('last-updated').textContent = `Last updated: ${updated}`;
-  document.getElementById('latest-quarter').textContent = meta.latest_quarter
-    ? `Latest filing: ${meta.latest_quarter}`
-    : '';
+function switchQuarter(q) {
+  S.quarter = q;
+  document.querySelectorAll('.qtab').forEach(b => b.classList.toggle('active', b.dataset.q === q));
+  renderStats();
+  renderHoldings();
+  renderDonut();
+}
+
+function getQHoldings(q) {
+  return (S.holdingsByQuarter[q] || []).filter(h => h.qoq_status !== 'exited');
+}
+
+function prevQuarter(q) {
+  const qs = Object.keys(S.holdingsByQuarter).filter(x => /^\d{4}-Q\d$/.test(x)).sort();
+  const idx = qs.indexOf(q);
+  return idx > 0 ? qs[idx - 1] : null;
 }
 
 function renderStats() {
-  const { latestHoldings, meta } = state;
-  if (!latestHoldings || !latestHoldings.holdings) return;
+  const holdings = getQHoldings(S.quarter);
+  const total = holdings.reduce((s,h) => s + (h.value_thousands||0), 0) * 1000;
 
-  const active = latestHoldings.holdings.filter(h => h.qoq_status !== 'exited');
-  const total = active.reduce((s, h) => s + h.value_thousands, 0) * 1000;
-  const largest = active[0];
+  const prev = prevQuarter(S.quarter);
+  const prevHoldings = prev ? getQHoldings(prev) : [];
+  const prevTotal = prevHoldings.reduce((s,h) => s + (h.value_thousands||0), 0) * 1000;
 
-  document.getElementById('stat-total-value').textContent = fmt.usd(total);
-  document.getElementById('stat-quarter').textContent = latestHoldings.quarter || '—';
-  document.getElementById('stat-holdings').textContent = active.length;
-  document.getElementById('stat-largest').textContent = largest
-    ? (largest.ticker || largest.display_name || '—')
-    : '—';
-  document.getElementById('stat-largest-pct').textContent = largest
-    ? `${largest.pct_of_portfolio?.toFixed(1)}% of portfolio`
-    : '';
-  document.getElementById('stat-filings').textContent = meta.total_filing_count || 0;
-}
+  // Value card
+  document.getElementById('s-value').textContent = fmt.usd(total);
+  const valDelta = document.getElementById('s-value-delta');
+  if (prev && prevTotal > 0) {
+    const pct = ((total - prevTotal) / prevTotal * 100);
+    valDelta.style.display = '';
+    valDelta.textContent = (pct >= 0 ? '▲ +' : '▼ ') + pct.toFixed(1) + '% QoQ';
+    valDelta.className = 'kdelta ' + (pct >= 0 ? 'up' : 'down');
+  } else { valDelta.style.display = 'none'; }
 
-function renderQuarterSelect() {
-  const sel = document.getElementById('quarter-select');
-  const quarters = Object.keys(state.holdingsByQuarter).sort().reverse();
-  quarters.forEach(q => {
-    const opt = document.createElement('option');
-    opt.value = q;
-    opt.textContent = q;
-    if (q === state.activeQuarter) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
+  // Holdings count
+  document.getElementById('s-count').textContent = holdings.length;
+  document.getElementById('s-count-sub').textContent = `Positions (${S.quarter})`;
+  const cntDelta = document.getElementById('s-count-delta');
+  if (prev) {
+    const diff = holdings.length - prevHoldings.length;
+    cntDelta.style.display = '';
+    cntDelta.textContent = (diff >= 0 ? '▲ +' : '▼ ') + diff + ` vs ${prev}`;
+    cntDelta.className = 'kdelta ' + (diff >= 0 ? 'up' : 'down');
+  } else { cntDelta.style.display = 'none'; }
 
-function getDisplayHoldings() {
-  const quarterData = state.holdingsByQuarter[state.activeQuarter] || [];
-  let rows = quarterData.slice();
-
-  if (!state.showExited) rows = rows.filter(h => h.qoq_status !== 'exited');
-
-  const q = state.filter.toLowerCase();
-  if (q) {
-    rows = rows.filter(h =>
-      (h.ticker || '').toLowerCase().includes(q) ||
-      (h.display_name || '').toLowerCase().includes(q) ||
-      (h.name_of_issuer || '').toLowerCase().includes(q)
-    );
+  // Largest long
+  const longs = holdings.filter(h => holdingType(h) === 'long').sort((a,b) => (b.value_thousands||0)-(a.value_thousands||0));
+  const largest = longs[0];
+  if (largest) {
+    const name = largest.ticker || largest.display_name || largest.name_of_issuer || '—';
+    const ticker = largest.ticker ? ` <span style="color:var(--muted);font-size:15px">(${largest.ticker})</span>` : '';
+    document.getElementById('s-largest').innerHTML =
+      (largest.display_name && largest.display_name !== largest.ticker ? largest.display_name : name) + ticker;
+    document.getElementById('s-largest-sub').textContent =
+      `${fmt.usd((largest.value_thousands||0)*1000)} · ${(largest.pct_of_portfolio||0).toFixed(2)}% of portfolio`;
+    renderSparkline(largest.cusip);
   }
 
-  rows.sort((a, b) => {
-    let av = a[state.sortCol] ?? 0;
-    let bv = b[state.sortCol] ?? 0;
-    if (typeof av === 'string') av = av.toLowerCase();
-    if (typeof bv === 'string') bv = bv.toLowerCase();
-    if (av < bv) return state.sortDir === 'asc' ? -1 : 1;
-    if (av > bv) return state.sortDir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  // Short/Put exposure
+  const puts = holdings.filter(h => holdingType(h) === 'put');
+  const putTotal = puts.reduce((s,h) => s + (h.value_thousands||0), 0) * 1000;
+  document.getElementById('s-put').textContent = fmt.usd(putTotal);
+  const putPctEl = document.getElementById('s-put-pct');
+  if (total > 0 && putTotal > 0) {
+    const pp = (putTotal / total * 100).toFixed(0);
+    putPctEl.style.display = '';
+    putPctEl.textContent = `${pp}% of book`;
+    putPctEl.className = 'kdelta warn';
+  } else { putPctEl.style.display = 'none'; }
+}
 
+function renderSparkline(cusip) {
+  const svg = document.getElementById('spark');
+  svg.innerHTML = '';
+  const qs = Object.keys(S.holdingsByQuarter).filter(q => /^\d{4}-Q\d$/.test(q)).sort();
+  const vals = qs.map(q => {
+    const h = (S.holdingsByQuarter[q]||[]).find(h => h.cusip === cusip);
+    return h ? (h.shares||0) : 0;
+  }).filter((v,i,a) => { const first = a.findIndex(x => x > 0); return i >= first; });
+  if (vals.length < 2) return;
+  const W=220, H=34, pad=3;
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+  const range = mx - mn || 1;
+  const pts = vals.map((v,i) => [
+    pad + (i/(vals.length-1))*(W-2*pad),
+    H-pad - ((v-mn)/range)*(H-2*pad)
+  ]);
+  const poly = pts.map(p=>p.join(',')).join(' ');
+  const area = document.createElementNS(NS,'polygon');
+  area.setAttribute('points', `${pad},${H-pad} ${poly} ${pts[pts.length-1][0]},${H-pad}`);
+  area.setAttribute('fill','rgba(110,64,201,0.18)');
+  svg.appendChild(area);
+  const line = document.createElementNS(NS,'polyline');
+  line.setAttribute('points', poly); line.setAttribute('fill','none');
+  line.setAttribute('stroke','#8957e5'); line.setAttribute('stroke-width','2');
+  line.setAttribute('stroke-linecap','round'); line.setAttribute('stroke-linejoin','round');
+  svg.appendChild(line);
+  const last = pts[pts.length-1];
+  const dot = document.createElementNS(NS,'circle');
+  dot.setAttribute('cx',last[0]); dot.setAttribute('cy',last[1]); dot.setAttribute('r','3');
+  dot.setAttribute('fill','#8957e5'); dot.setAttribute('stroke','#161b22'); dot.setAttribute('stroke-width','1.5');
+  svg.appendChild(dot);
+}
+
+function filteredHoldings() {
+  let rows = (S.holdingsByQuarter[S.quarter] || []).slice();
+  if (S.typeFilter !== 'all') rows = rows.filter(h => holdingType(h) === S.typeFilter);
+  if (S.searchQ) {
+    const q = S.searchQ.toLowerCase();
+    rows = rows.filter(h =>
+      (h.ticker||'').toLowerCase().includes(q) ||
+      (h.display_name||'').toLowerCase().includes(q) ||
+      (h.name_of_issuer||'').toLowerCase().includes(q)
+    );
+  }
   return rows;
 }
 
-function renderHoldingsTable() {
+function renderHoldings() {
+  document.getElementById('holdings-qtag').textContent = S.quarter || '—';
   const tbody = document.getElementById('holdings-body');
-  const rows = getDisplayHoldings();
+  const rows = filteredHoldings();
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">
-      <h3>No positions found</h3><p>Try adjusting the filter or quarter.</p>
-    </td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">No positions found.</td></tr>';
     return;
   }
 
   tbody.innerHTML = rows.map(h => {
+    const type = holdingType(h);
     const isExited = h.qoq_status === 'exited';
-    const sdelta = fmt.delta(h.qoq_shares_delta ?? 0, true);
-    const vdelta = fmt.delta(h.qoq_value_delta ?? 0);
-    const badge = h.qoq_status === 'new'
-      ? '<span class="badge badge-new">NEW</span>'
-      : h.qoq_status === 'exited'
-        ? '<span class="badge badge-exited">EXITED</span>'
-        : '';
-    return `<tr class="${isExited ? 'row-exited' : ''}" data-cusip="${h.cusip}">
-      <td class="ticker-cell">${h.ticker || '—'}${badge}</td>
-      <td>${h.display_name || h.name_of_issuer || '—'}</td>
-      <td class="num">${fmt.num(h.shares)}</td>
-      <td class="num">${fmt.usd(h.value_usd || h.value_thousands * 1000)}</td>
-      <td class="num">${h.pct_of_portfolio != null ? fmt.pct(h.pct_of_portfolio) : '—'}</td>
-      <td class="num ${sdelta.cls}">${sdelta.text}</td>
-      <td class="num ${vdelta.cls}">${vdelta.text}</td>
+    const typePill = `<span class="type-pill type-${type}">${type.toUpperCase()}</span>`;
+
+    const size = type === 'long' && h.shares ? fmt.shares(h.shares) : '—';
+
+    let qoqHtml;
+    if (h.qoq_status === 'new') {
+      qoqHtml = '<span class="new-badge">★ NEW</span>';
+    } else if (isExited) {
+      qoqHtml = '<span class="exited-badge">EXITED</span>';
+    } else if (h.qoq_shares_delta && h.qoq_shares_delta !== 0) {
+      const pct = h.qoq_value_delta && h.value_thousands > 0
+        ? ((h.qoq_value_delta / (h.value_thousands - h.qoq_value_delta)) * 100)
+        : 0;
+      const sign = pct >= 0 ? '▲ +' : '▼ ';
+      const cls = pct >= 0 ? 'green' : 'red';
+      qoqHtml = `<span class="qoq ${cls}">${sign}${Math.abs(pct).toFixed(1)}%</span>`;
+    } else {
+      qoqHtml = '<span class="qoq muted">—</span>';
+    }
+
+    const portPct = h.pct_of_portfolio || 0;
+    const portBar = `<span class="portbar"><span class="portbar-fill" style="width:${Math.min(portPct*3,100)}%"></span></span>`;
+
+    return `<tr class="${isExited?'exited-row':''}" data-cusip="${h.cusip}">
+      <td><span class="tk">${h.ticker||'—'}</span></td>
+      <td class="co">${h.display_name||h.name_of_issuer||'—'}</td>
+      <td>${typePill}</td>
+      <td class="num">${size}</td>
+      <td class="num">${fmt.usd((h.value_thousands||0)*1000)}</td>
+      <td class="num">${portPct ? fmt.pct(portPct) : '—'}${portBar}</td>
+      <td class="num">${qoqHtml}</td>
     </tr>`;
   }).join('');
 
-  tbody.querySelectorAll('tr[data-cusip]').forEach(tr => {
-    tr.addEventListener('click', () => openDrawer(tr.dataset.cusip));
-  });
+  tbody.querySelectorAll('tr[data-cusip]').forEach(tr =>
+    tr.addEventListener('click', () => openDrawer(tr.dataset.cusip))
+  );
 }
 
-function renderHistoryChart() {
-  const { meta } = state;
-  const series = meta.chart_series || {};
-  const quarters = meta.quarters || [];
+function renderDonut() {
+  const holdings = getQHoldings(S.quarter);
+  const total = holdings.reduce((s,h) => s + (h.value_thousands||0), 0);
+  if (!total) return;
 
-  if (!quarters.length) return;
+  const groups = {};
+  holdings.forEach(h => {
+    const type = holdingType(h);
+    const key = type === 'long'
+      ? (h.ticker || h.display_name || 'Long')
+      : type === 'put' ? 'Puts' : 'Calls';
+    groups[key] = (groups[key]||0) + (h.value_thousands||0);
+  });
 
-  const datasets = Object.entries(series).map(([cusip, s], i) => ({
-    label: s.label || cusip,
-    data: quarters.map(q => {
-      const pt = s.data.find(d => d.quarter === q);
-      return pt ? pt.value_usd / 1e6 : 0;
-    }),
-    borderColor: PALETTE[i % PALETTE.length],
-    backgroundColor: PALETTE[i % PALETTE.length] + '22',
-    tension: 0.3,
-    pointRadius: 4,
-    fill: false,
+  // Bucket: Puts, Calls, top 3 longs, Other Longs
+  const putTotal  = holdings.filter(h=>holdingType(h)==='put').reduce((s,h)=>s+(h.value_thousands||0),0);
+  const callTotal = holdings.filter(h=>holdingType(h)==='call').reduce((s,h)=>s+(h.value_thousands||0),0);
+  const longsSorted = holdings.filter(h=>holdingType(h)==='long').sort((a,b)=>(b.value_thousands||0)-(a.value_thousands||0));
+  const topLongs = longsSorted.slice(0,3);
+  const otherLong = longsSorted.slice(3).reduce((s,h)=>s+(h.value_thousands||0),0);
+
+  const COLORS = ['#f85149','#58a6ff','#8957e5','#3fb950','#f4c542','#e3934d','#76e4f7'];
+  const segments = [
+    putTotal  > 0 ? { label:'Put Options',   val:putTotal,  color:'#f85149' } : null,
+    callTotal > 0 ? { label:'Call Options',  val:callTotal, color:'#58a6ff' } : null,
+    ...topLongs.map((h,i) => ({ label: h.ticker||h.display_name||'Long', val:h.value_thousands||0, color:COLORS[2+i] })),
+    otherLong > 0 ? { label:'Other Longs',  val:otherLong, color:'#6e7681' } : null,
+  ].filter(Boolean);
+
+  const svg = document.getElementById('donut');
+  svg.innerHTML = '';
+  const cx=75, cy=75, r=54, sw=20;
+  const C = 2*Math.PI*r;
+
+  const track = document.createElementNS(NS,'circle');
+  track.setAttribute('cx',cx); track.setAttribute('cy',cy); track.setAttribute('r',r);
+  track.setAttribute('fill','none'); track.setAttribute('stroke','#21262d'); track.setAttribute('stroke-width',sw);
+  svg.appendChild(track);
+
+  let offset=0;
+  segments.forEach(seg => {
+    const pct = seg.val/total;
+    const len = pct*C;
+    const el = document.createElementNS(NS,'circle');
+    el.setAttribute('cx',cx); el.setAttribute('cy',cy); el.setAttribute('r',r);
+    el.setAttribute('fill','none'); el.setAttribute('stroke',seg.color); el.setAttribute('stroke-width',sw);
+    el.setAttribute('stroke-dasharray',`${len} ${C-len}`);
+    el.setAttribute('stroke-dashoffset', -offset);
+    el.setAttribute('transform',`rotate(-90 ${cx} ${cy})`);
+    el.setAttribute('stroke-linecap','butt');
+    svg.appendChild(el);
+    offset += len;
+  });
+
+  // Center label — put % or long %
+  const putPct = putTotal/total*100;
+  const centerVal = putTotal > 0 ? `${putPct.toFixed(0)}%` : `${((longsSorted.reduce((s,h)=>s+(h.value_thousands||0),0)/total)*100).toFixed(0)}%`;
+  const centerLab = putTotal > 0 ? 'PUT EXPOSURE' : 'LONG EXPOSURE';
+
+  const tv = document.createElementNS(NS,'text');
+  tv.setAttribute('x',cx); tv.setAttribute('y',cy+1); tv.setAttribute('text-anchor','middle');
+  tv.setAttribute('class','donut-center-val'); tv.textContent = centerVal;
+  svg.appendChild(tv);
+  const tl = document.createElementNS(NS,'text');
+  tl.setAttribute('x',cx); tl.setAttribute('y',cy+14); tl.setAttribute('text-anchor','middle');
+  tl.setAttribute('class','donut-center-lab'); tl.textContent = centerLab;
+  svg.appendChild(tl);
+
+  const legend = document.getElementById('donut-legend');
+  legend.innerHTML = segments.map(seg => `
+    <div class="legend-row">
+      <span class="legend-dot" style="background:${seg.color}"></span>
+      <span class="legend-label">${seg.label}</span>
+      <span class="legend-pct">${(seg.val/total*100).toFixed(1)}%</span>
+    </div>`).join('');
+}
+
+function renderBarChart() {
+  const filings = [...(S.filings||[])].sort((a,b)=>a.period.localeCompare(b.period));
+  if (!filings.length) return;
+
+  const barData = filings.map(f => ({
+    q: f.quarter || f.period,
+    val: (f.total_value_thousands||0) * 1000,
   }));
 
-  const ctx = document.getElementById('history-chart').getContext('2d');
-  if (state.historyChart) state.historyChart.destroy();
-  state.historyChart = new Chart(ctx, {
-    type: 'line',
-    data: { labels: quarters, datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#c9d1d9', font: { size: 12 } } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(1)}M` } },
-      },
-      scales: {
-        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-        y: { ticks: { color: '#8b949e', callback: v => `$${v}M` }, grid: { color: '#21262d' } },
-      },
-    },
+  const maxVal = Math.max(...barData.map(b=>b.val), 1);
+  const maxB = Math.ceil(maxVal/1e9) * 1e9; // round up to next billion
+
+  const svg = document.getElementById('barchart');
+  svg.innerHTML = '';
+  const BW=560, BH=200, pL=46, pR=548, pT=18, pB=172;
+  const pH = pB - pT;
+  const yFor = v => pB - (v/maxB)*pH;
+
+  // defs gradient
+  const defs = document.createElementNS(NS,'defs');
+  defs.innerHTML = '<linearGradient id="bGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8957e5"/><stop offset="100%" stop-color="#6e40c9"/></linearGradient>';
+  svg.appendChild(defs);
+
+  // y-axis gridlines
+  const steps = 4;
+  for (let i=0; i<=steps; i++) {
+    const v = (maxB/steps)*i;
+    const y = yFor(v);
+    const ln = document.createElementNS(NS,'line');
+    ln.setAttribute('x1',pL); ln.setAttribute('x2',pR);
+    ln.setAttribute('y1',y); ln.setAttribute('y2',y);
+    ln.setAttribute('stroke','#21262d'); ln.setAttribute('stroke-width','1');
+    svg.appendChild(ln);
+    if (i > 0) {
+      const t = document.createElementNS(NS,'text');
+      t.setAttribute('x',pL-6); t.setAttribute('y',y+3); t.setAttribute('text-anchor','end');
+      t.setAttribute('fill','#8b949e'); t.setAttribute('font-size','9');
+      t.setAttribute('font-family','var(--mono)');
+      t.textContent = `$${(v/1e9).toFixed(0)}B`;
+      svg.appendChild(t);
+    }
+  }
+
+  const n = barData.length;
+  const slot = (pR-pL)/n;
+  const bw = Math.min(slot*0.55, 52);
+  const isLatest = i => i === n-1;
+
+  barData.forEach((b,i) => {
+    const cx = pL + slot*i + slot/2;
+    const fullH = (b.val/maxB)*pH;
+    const rect = document.createElementNS(NS,'rect');
+    rect.setAttribute('x', cx-bw/2);
+    rect.setAttribute('width', bw);
+    rect.setAttribute('rx','5');
+    rect.setAttribute('fill', isLatest(i) ? 'url(#bGrad)' : 'rgba(110,64,201,0.45)');
+    rect.setAttribute('y', pB - Math.max(fullH,2));
+    rect.setAttribute('height', Math.max(fullH,2));
+    svg.appendChild(rect);
+
+    const vl = document.createElementNS(NS,'text');
+    vl.setAttribute('x',cx); vl.setAttribute('y', pB - Math.max(fullH,2) - 6);
+    vl.setAttribute('text-anchor','middle'); vl.setAttribute('font-size','10');
+    vl.setAttribute('font-weight','600'); vl.setAttribute('font-family','var(--mono)');
+    vl.setAttribute('fill', isLatest(i) ? '#f4c542' : '#8b949e');
+    vl.textContent = b.val >= 1e9 ? `$${(b.val/1e9).toFixed(2)}B` : b.val >= 1e6 ? `$${(b.val/1e6).toFixed(0)}M` : '—';
+    svg.appendChild(vl);
+
+    const ql = document.createElementNS(NS,'text');
+    ql.setAttribute('x',cx); ql.setAttribute('y', pB+18);
+    ql.setAttribute('text-anchor','middle'); ql.setAttribute('font-size','10');
+    ql.setAttribute('font-family','var(--mono)'); ql.setAttribute('fill','#8b949e');
+    ql.textContent = (b.q||'').replace('-Q',' Q').replace(/(\d{4}) Q(\d)/,(_,y,n)=>`Q${n} ${y}`);
+    svg.appendChild(ql);
   });
 }
 
-function renderDonutChart() {
-  const holdings = (state.latestHoldings?.holdings || []).filter(h => h.qoq_status !== 'exited');
-  if (!holdings.length) return;
-
-  const top10 = holdings.slice(0, 10);
-  const othersValue = holdings.slice(10).reduce((s, h) => s + h.value_thousands, 0);
-
-  const labels = [...top10.map(h => h.ticker || h.display_name || h.cusip)];
-  const data = [...top10.map(h => h.value_thousands)];
-  const colors = [...PALETTE.slice(0, top10.length)];
-
-  if (othersValue > 0) { labels.push('Other'); data.push(othersValue); colors.push('#30363d'); }
-
-  const ctx = document.getElementById('donut-chart').getContext('2d');
-  if (state.donutChart) state.donutChart.destroy();
-  state.donutChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 1, borderColor: '#161b22' }] },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
-              const pct = (ctx.parsed / total * 100).toFixed(1);
-              return ` ${ctx.label}: ${fmt.usd(ctx.parsed * 1000)} (${pct}%)`;
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const legend = document.getElementById('composition-legend');
-  legend.innerHTML = top10.map((h, i) => `
-    <div class="legend-item">
-      <div class="legend-dot" style="background:${colors[i]}"></div>
-      <span class="legend-ticker">${h.ticker || '—'}</span>
-      <span class="legend-name">${h.display_name || h.name_of_issuer || ''}</span>
-      <span class="legend-pct">${fmt.pct(h.pct_of_portfolio || 0)}</span>
-    </div>
-  `).join('');
-}
-
-function renderFilingsTable() {
-  const filings = [...(state.filings || [])].sort((a, b) => b.filed_date.localeCompare(a.filed_date));
-  const tbody = document.getElementById('filings-body');
+function renderTimeline() {
+  const filings = [...(S.filings||[])].sort((a,b)=>a.period.localeCompare(b.period));
+  const container = document.getElementById('timeline');
 
   if (!filings.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><h3>No filings yet</h3></td></tr>`;
+    container.innerHTML = '<div class="empty-msg">No filings found.</div>';
     return;
   }
 
-  tbody.innerHTML = filings.map(f => `
-    <tr>
-      <td>${f.quarter || '—'}</td>
-      <td>${f.filed_date || '—'}</td>
-      <td><span class="badge badge-new">${f.form}</span></td>
-      <td class="num">${f.num_holdings ?? '—'}</td>
-      <td class="num">${f.total_value_thousands ? fmt.usd(f.total_value_thousands * 1000) : '—'}</td>
-      <td><a href="${f.filing_url || '#'}" target="_blank" rel="noopener">EDGAR ↗</a></td>
-    </tr>
-  `).join('');
+  const latest = filings[filings.length-1];
+  container.innerHTML = filings.map(f => {
+    const isLat = f.accession_number === latest.accession_number;
+    const val = f.total_value_thousands ? fmt.usd(f.total_value_thousands*1000) : '—';
+    return `<div class="tl-row${isLat?' latest':''}">
+      <div class="tl-q">${f.quarter||f.period} ${isLat?'<span class="latest-chip">LATEST</span>':''}</div>
+      <div class="tl-meta">Filed ${f.filed_date||'—'}</div>
+      <div class="tl-meta"><b>${f.num_holdings??'—'} holdings</b></div>
+      <div class="tl-meta">Reported <b>${val}</b></div>
+      <a class="edgar" href="${f.filing_url||'#'}" target="_blank" rel="noopener">View on EDGAR →</a>
+    </div>`;
+  }).reverse().join('');
 }
 
 function openDrawer(cusip) {
-  const allQuarters = Object.keys(state.holdingsByQuarter).sort();
-  const history = allQuarters.map(q => {
-    const h = state.holdingsByQuarter[q].find(h => h.cusip === cusip);
-    return h ? { quarter: q, ...h } : { quarter: q, shares: 0, value_thousands: 0, pct_of_portfolio: 0 };
-  }).filter(h => h.shares > 0 || allQuarters.indexOf(h.quarter) === allQuarters.length - 1);
-
-  const latest = history[history.length - 1];
-  const label = latest?.ticker || latest?.display_name || latest?.name_of_issuer || cusip;
-
-  document.getElementById('drawer-title').textContent = label;
-  document.getElementById('drawer-cusip').textContent = `CUSIP: ${cusip}`;
-
-  document.getElementById('drawer-stats').innerHTML = `
-    <div class="drawer-stat"><div class="drawer-stat-label">Shares</div><div class="drawer-stat-value">${fmt.num(latest?.shares || 0)}</div></div>
-    <div class="drawer-stat"><div class="drawer-stat-label">Market Value</div><div class="drawer-stat-value">${fmt.usd((latest?.value_thousands || 0) * 1000)}</div></div>
-    <div class="drawer-stat"><div class="drawer-stat-label">% Portfolio</div><div class="drawer-stat-value">${fmt.pct(latest?.pct_of_portfolio || 0)}</div></div>
-    <div class="drawer-stat"><div class="drawer-stat-label">Quarters held</div><div class="drawer-stat-value">${history.filter(h => h.shares > 0).length}</div></div>
-  `;
-
-  const ctx = document.getElementById('sparkline-chart').getContext('2d');
-  if (state.sparklineChart) state.sparklineChart.destroy();
-  state.sparklineChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: history.map(h => h.quarter),
-      datasets: [{ data: history.map(h => h.shares), borderColor: '#6e40c9', backgroundColor: '#6e40c922', fill: true, tension: 0.3, pointRadius: 3 }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' } },
-        y: { ticks: { color: '#8b949e', callback: v => fmt.num(v) }, grid: { color: '#21262d' } },
-      },
-    },
+  const qs = Object.keys(S.holdingsByQuarter).filter(q=>/^\d{4}-Q\d$/.test(q)).sort();
+  const history = qs.map(q => {
+    const h = (S.holdingsByQuarter[q]||[]).find(h=>h.cusip===cusip);
+    return h ? {quarter:q,...h} : {quarter:q,shares:0,value_thousands:0,pct_of_portfolio:0};
   });
+  const withData = history.filter(h=>h.shares>0||h.value_thousands>0);
+  if (!withData.length) return;
 
-  document.getElementById('drawer-history-body').innerHTML = history.map(h => `
+  const latest = withData[withData.length-1];
+  const name = latest.display_name||latest.name_of_issuer||latest.ticker||cusip;
+
+  document.getElementById('drawer-title').textContent = name;
+  document.getElementById('drawer-cusip').textContent = `CUSIP: ${cusip}${latest.ticker?' · '+latest.ticker:''}`;
+  document.getElementById('drawer-stats').innerHTML = `
+    <div class="drawer-stat"><div class="drawer-stat-label">Shares</div><div class="drawer-stat-value">${fmt.shares(latest.shares||0)}</div></div>
+    <div class="drawer-stat"><div class="drawer-stat-label">Market Value</div><div class="drawer-stat-value">${fmt.usd((latest.value_thousands||0)*1000)}</div></div>
+    <div class="drawer-stat"><div class="drawer-stat-label">% Portfolio</div><div class="drawer-stat-value">${fmt.pct(latest.pct_of_portfolio||0)}</div></div>
+    <div class="drawer-stat"><div class="drawer-stat-label">Quarters held</div><div class="drawer-stat-value">${withData.length}</div></div>`;
+
+  // Sparkline
+  const svg = document.getElementById('drawer-spark');
+  svg.innerHTML = '';
+  const vals = withData.map(h=>h.value_thousands||0);
+  if (vals.length >= 2) {
+    const W=332, H=110, pad=4;
+    const mn=Math.min(...vals), mx=Math.max(...vals), range=mx-mn||1;
+    const pts = vals.map((v,i) => [
+      pad+(i/(vals.length-1))*(W-2*pad),
+      H-pad-((v-mn)/range)*(H-2*pad)
+    ]);
+    const poly = pts.map(p=>p.join(',')).join(' ');
+    const area = document.createElementNS(NS,'polygon');
+    area.setAttribute('points',`${pad},${H-pad} ${poly} ${pts[pts.length-1][0]},${H-pad}`);
+    area.setAttribute('fill','rgba(110,64,201,0.15)');
+    svg.appendChild(area);
+    const line = document.createElementNS(NS,'polyline');
+    line.setAttribute('points',poly); line.setAttribute('fill','none');
+    line.setAttribute('stroke','#8957e5'); line.setAttribute('stroke-width','2');
+    line.setAttribute('stroke-linecap','round'); line.setAttribute('stroke-linejoin','round');
+    svg.appendChild(line);
+    const last=pts[pts.length-1];
+    const dot = document.createElementNS(NS,'circle');
+    dot.setAttribute('cx',last[0]); dot.setAttribute('cy',last[1]); dot.setAttribute('r','4');
+    dot.setAttribute('fill','#8957e5'); dot.setAttribute('stroke','#161b22'); dot.setAttribute('stroke-width','2');
+    svg.appendChild(dot);
+  }
+
+  document.getElementById('drawer-body').innerHTML = withData.map(h => `
     <tr>
       <td>${h.quarter}</td>
-      <td class="num">${fmt.num(h.shares)}</td>
-      <td class="num">${fmt.usd(h.value_thousands * 1000)}</td>
-      <td class="num">${h.pct_of_portfolio != null ? fmt.pct(h.pct_of_portfolio) : '—'}</td>
-    </tr>
-  `).join('');
+      <td class="num">${fmt.shares(h.shares||0)}</td>
+      <td class="num">${fmt.usd((h.value_thousands||0)*1000)}</td>
+      <td class="num">${h.pct_of_portfolio!=null?fmt.pct(h.pct_of_portfolio):'—'}</td>
+    </tr>`).reverse().join('');
 
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('detail-drawer').classList.add('open');
@@ -355,43 +499,18 @@ function closeDrawer() {
 }
 
 function bindEvents() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+  document.querySelectorAll('#type-seg button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#type-seg button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      S.typeFilter = b.dataset.f;
+      renderHoldings();
     });
   });
 
   document.getElementById('search-input').addEventListener('input', e => {
-    state.filter = e.target.value;
-    renderHoldingsTable();
-  });
-
-  document.getElementById('quarter-select').addEventListener('change', e => {
-    state.activeQuarter = e.target.value || state.meta.latest_quarter;
-    renderHoldingsTable();
-  });
-
-  document.getElementById('show-exited').addEventListener('change', e => {
-    state.showExited = e.target.checked;
-    renderHoldingsTable();
-  });
-
-  document.querySelectorAll('th.sortable').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
-      if (state.sortCol === col) {
-        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.sortCol = col;
-        state.sortDir = 'desc';
-      }
-      document.querySelectorAll('th.sortable').forEach(t => t.classList.remove('sort-asc', 'sort-desc'));
-      th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
-      renderHoldingsTable();
-    });
+    S.searchQ = e.target.value;
+    renderHoldings();
   });
 
   document.getElementById('drawer-close').addEventListener('click', closeDrawer);

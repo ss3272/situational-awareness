@@ -307,7 +307,7 @@ function renderSnapshotStats(q) {
   const valueDelta = prevV>0 ? (totalV-prevV)/prevV*100 : null;
 
   document.getElementById('snapshot-stats').innerHTML = [
-    {label:'Total Portfolio Value', value:fmt.usd(totalV), meta: valueDelta!==null ? `<span style="color:${valueDelta>=0?'var(--green)':'var(--red)'}">${valueDelta>=0?'▲':'▼'} ${Math.abs(valueDelta).toFixed(1)}% QoQ</span>` : '13F Reportable'},
+    {label:'Total Portfolio Value', value:fmt.usd(totalV), meta: valueDelta!==null ? `<span style="color:${valueDelta>=0?'var(--green)':'var(--red)'}">` + (valueDelta>=0?'▲':'▼') + ` ${Math.abs(valueDelta).toFixed(1)}% QoQ</span>` : '13F Reportable'},
     {label:'Active Holdings',       value:active.length,   meta:'Positions reported'},
     {label:'New This Quarter',      value:newCount,        meta:'<span style="color:var(--green)">▲ Added</span>'},
     {label:'Exited This Quarter',   value:exitedCount,     meta:'<span style="color:var(--red)">▼ Closed</span>'},
@@ -426,7 +426,7 @@ function renderFilingTimeline() {
   document.getElementById('filing-timeline').innerHTML=filings.map(f=>{
     const isLatest=f.accession_number===latestAcc;
     const val=f.total_value_thousands?fmt.usd(f.total_value_thousands*1000):'—';
-    return `<div class="timeline-row${isLatest?' latest':''}"><div class="timeline-quarter">${f.quarter||f.period}${isLatest?'<span class="latest-chip">LATEST</span>':''}</div><div class="timeline-date">Filed ${fmt.date(f.filed_date)}</div><div class="timeline-count">${f.num_holdings??'—'} pos.</div><div class="timeline-value">${val}</div><a class="edgar-link" href="${f.filing_url||'#'}" target="_blank" rel="noopener">View on EDGAR →</a></div>`;
+    return `<div class="timeline-row${isLatest?' latest':''}"><div class="timeline-quarter">${f.quarter||f.period}${isLatest?'<span class="latest-chip">LATEST</span>':''}</div><div class="timeline-value" style="text-align:right">${val}</div><a class="edgar-link" href="${f.filing_url||'#'}" target="_blank" rel="noopener" style="grid-column:3;grid-row:2;justify-self:end;font-size:11px">EDGAR →</a><div class="timeline-date" style="grid-column:1;grid-row:2;color:var(--muted);font-size:11px">Filed ${fmt.date(f.filed_date)} · ${f.num_holdings??'—'} pos.</div></div>`;
   }).join('');
 }
 
@@ -527,5 +527,3 @@ async function init() {
   renderFilingTimeline();
   wireFilters();
 }
-
-init();

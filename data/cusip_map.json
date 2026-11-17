@@ -101,6 +101,12 @@
     "security_type": "Common Stock",
     "ticker": "EQT"
   },
+  "314911108": {
+    "exchange": "US",
+    "name": "FERMI INC",
+    "security_type": "Common Stock",
+    "ticker": "FRMI"
+  },
   "35834F104": {
     "exchange": "US",
     "name": "T1 ENERGY INC",
@@ -226,6 +232,12 @@
     "name": "SHARONAI HOLDINGS INC",
     "security_type": "Common Stock",
     "ticker": "SHAZ"
+  },
+  "77926X320": {
+    "exchange": "US",
+    "name": "ROUNDHILL MEMORY ETF",
+    "security_type": "ETP",
+    "ticker": "DRAM"
   },
   "80004C200": {
     "exchange": "US",

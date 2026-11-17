@@ -1,12 +1,12 @@
 {
   "cik": 2045724,
   "entity_name": "Situational Awareness LP",
-  "last_updated": "2026-11-16T16:53:59Z",
-  "latest_quarter": "2026-Q2",
-  "total_filing_count": 7,
+  "last_updated": "2026-11-17T16:48:12Z",
+  "latest_quarter": "2026-Q3",
+  "total_filing_count": 8,
   "chart_series": {
-    "80004C200": {
-      "label": "SNDK",
+    "778920306": {
+      "label": "SHAZ",
       "data": [
         {
           "quarter": "2024-Q4",
@@ -25,47 +25,7 @@
         },
         {
           "quarter": "2025-Q3",
-          "value_usd": 12903000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q4",
-          "value_usd": 250245000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q1",
-          "value_usd": 724363000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q2",
-          "value_usd": 5673738000,
-          "shares": 0
-        }
-      ]
-    },
-    "595112103": {
-      "label": "MU",
-      "data": [
-        {
-          "quarter": "2024-Q4",
           "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q1",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q2",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q3",
-          "value_usd": 50196000,
           "shares": 0
         },
         {
@@ -75,12 +35,17 @@
         },
         {
           "quarter": "2026-Q1",
-          "value_usd": 583686000,
+          "value_usd": 18095000,
           "shares": 0
         },
         {
           "quarter": "2026-Q2",
-          "value_usd": 5573819000,
+          "value_usd": 456836000,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q3",
+          "value_usd": 440673000,
           "shares": 0
         }
       ]
@@ -122,11 +87,16 @@
           "quarter": "2026-Q2",
           "value_usd": 1898778000,
           "shares": 0
+        },
+        {
+          "quarter": "2026-Q3",
+          "value_usd": 110792000,
+          "shares": 0
         }
       ]
     },
-    "874039100": {
-      "label": "TSM",
+    "80004C200": {
+      "label": "SNDK",
       "data": [
         {
           "quarter": "2024-Q4",
@@ -145,22 +115,27 @@
         },
         {
           "quarter": "2025-Q3",
-          "value_usd": 75408000,
+          "value_usd": 12903000,
           "shares": 0
         },
         {
           "quarter": "2025-Q4",
-          "value_usd": 0,
+          "value_usd": 250245000,
           "shares": 0
         },
         {
           "quarter": "2026-Q1",
-          "value_usd": 535110000,
+          "value_usd": 724363000,
           "shares": 0
         },
         {
           "quarter": "2026-Q2",
-          "value_usd": 1265099000,
+          "value_usd": 5673738000,
+          "shares": 0
+        },
+        {
+          "quarter": "2026-Q3",
+          "value_usd": 104393000,
           "shares": 0
         }
       ]
@@ -202,205 +177,10 @@
           "quarter": "2026-Q2",
           "value_usd": 1232894000,
           "shares": 0
-        }
-      ]
-    },
-    "21873S108": {
-      "label": "CRWV",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 0,
-          "shares": 0
         },
         {
-          "quarter": "2025-Q1",
-          "value_usd": 45423000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q2",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q3",
-          "value_usd": 563200000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q4",
-          "value_usd": 774426000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q1",
-          "value_usd": 556073000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q2",
-          "value_usd": 744515000,
-          "shares": 0
-        }
-      ]
-    },
-    "21874A106": {
-      "label": "CORZ",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q1",
-          "value_usd": 32736000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q2",
-          "value_usd": 136458000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q3",
-          "value_usd": 362038000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q4",
-          "value_usd": 418694000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q1",
-          "value_usd": 389086000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q2",
-          "value_usd": 665556000,
-          "shares": 0
-        }
-      ]
-    },
-    "861012102": {
-      "label": "STM",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q1",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q2",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q3",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q4",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q1",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q2",
-          "value_usd": 584344000,
-          "shares": 0
-        }
-      ]
-    },
-    "038169207": {
-      "label": "APLD",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q1",
-          "value_usd": 22680000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q2",
-          "value_usd": 66379000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q3",
-          "value_usd": 139111000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q4",
-          "value_usd": 278033000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q1",
-          "value_usd": 319978000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q2",
-          "value_usd": 469022000,
-          "shares": 0
-        }
-      ]
-    },
-    "767292105": {
-      "label": "RIOT",
-      "data": [
-        {
-          "quarter": "2024-Q4",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q1",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q2",
-          "value_usd": 0,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q3",
-          "value_usd": 68369000,
-          "shares": 0
-        },
-        {
-          "quarter": "2025-Q4",
-          "value_usd": 78144000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q1",
-          "value_usd": 142166000,
-          "shares": 0
-        },
-        {
-          "quarter": "2026-Q2",
-          "value_usd": 468198000,
+          "quarter": "2026-Q3",
+          "value_usd": 70764000,
           "shares": 0
         }
       ]
@@ -413,6 +193,7 @@
     "2025-Q3",
     "2025-Q4",
     "2026-Q1",
-    "2026-Q2"
+    "2026-Q2",
+    "2026-Q3"
   ]
 }

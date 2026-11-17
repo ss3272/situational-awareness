@@ -75,5 +75,16 @@
     "num_holdings": 26,
     "edgar_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=2045724&type=13F&dateb=&owner=include&count=40",
     "filing_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000418/0000935836-26-000418-index.htm"
+  },
+  {
+    "form": "13F-HR",
+    "accession_number": "0000935836-26-000610",
+    "filed_date": "2026-11-16",
+    "period": "2026-09-30",
+    "quarter": "2026-Q3",
+    "total_value_thousands": 1577447,
+    "num_holdings": 23,
+    "edgar_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=2045724&type=13F&dateb=&owner=include&count=40",
+    "filing_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000610/0000935836-26-000610-index.htm"
   }
 ]
